@@ -1,0 +1,27 @@
+node_modules/
+dist/
+build/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+
+# k6
+performance/k6/results/
+*.k6-summary.json
+
+# Env
+.env
+.env.local
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+*.log
