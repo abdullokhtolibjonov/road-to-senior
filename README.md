@@ -58,18 +58,20 @@ road-to-senior/
 
 ## Docs Map
 
-- `ROADMAP.md` — the phased curriculum: what to build, in what order, and what TS/testing concept
-  each phase is meant to teach.
-- `ARCHITECTURE.md` — conventions: naming, config strategy, how layers relate, what "done" looks
-  like for each layer.
-- `TYPESCRIPT-NOTES.md` — running checklist of TypeScript concepts mapped to the phase that
+All planning docs live in `docs/` to keep the repo root clean once source folders fill in.
+
+- `docs/ROADMAP.md` — the phased curriculum: what to build, in what order, and what TS/testing
+  concept each phase is meant to teach.
+- `docs/ARCHITECTURE.md` — conventions: naming, config strategy, how layers relate, what "done"
+  looks like for each layer.
+- `docs/TYPESCRIPT-NOTES.md` — running checklist of TypeScript concepts mapped to the phase that
   introduces them, plus beginner-friendly explanations of *why* each concept matters for testing.
-- `E2E-TESTING.md` — Playwright E2E plan: POM design, fixtures, selectors strategy, saucedemo test
-  scenarios to implement.
-- `API-TESTING.md` — API test plan: client design, schema validation, auth, test data.
-- `PERFORMANCE-TESTING.md` — k6 plan: scenario types, thresholds, TypeScript-in-k6 caveats, and the
-  load-testing ethics note (only ever test targets you own or that are meant for this).
-- `CI-CD.md` — GitHub Actions plan: jobs, triggers, artifacts, reporting.
+- `docs/E2E-TESTING.md` — Playwright E2E plan: POM design, fixtures, selectors strategy, saucedemo
+  test scenarios to implement.
+- `docs/API-TESTING.md` — API test plan: client design, schema validation, auth, test data.
+- `docs/PERFORMANCE-TESTING.md` — k6 plan: scenario types, thresholds, TypeScript-in-k6 caveats,
+  and the load-testing ethics note (only ever test targets you own or that are meant for this).
+- `docs/CI-CD.md` — GitHub Actions plan: jobs, triggers, artifacts, reporting.
 
 ## Ground Rule
 
