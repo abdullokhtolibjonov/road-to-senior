@@ -1,0 +1,35 @@
+{
+  "name": "road-to-senior",
+  "version": "1.0.0",
+  "description": "A personal test-automation portfolio project built to master **TypeScript** through practical, progressively harder test-engineering work: **E2E tests** (Playwright), **API tests** (Playwright request context), and **performance tests** (k6).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdullokhtolibjonov/road-to-senior.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/abdullokhtolibjonov/road-to-senior/issues"
+  },
+  "homepage": "https://github.com/abdullokhtolibjonov/road-to-senior#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.8",
+    "typescript": "6.0",
+    "typescript-eslint": "^8.70.1"
+  }
+}
