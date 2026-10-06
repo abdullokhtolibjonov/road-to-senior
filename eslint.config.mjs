@@ -12,7 +12,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["node_modules/**", "dist/**", "coverage/**"],
+    ignores: ["node_modules/**", "dist/**", "coverage/**", "playwright-report/**", "playwright-report-html/**"],
   },
 
   // Must be LAST

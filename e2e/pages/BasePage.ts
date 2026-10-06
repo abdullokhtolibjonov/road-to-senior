@@ -1,12 +1,18 @@
 import type { Page, Locator } from '@playwright/test'
 
 export abstract class BasePage {
-    protected page: Page;
+    protected readonly page: Page;
+    protected abstract readonly path: string;
+
     constructor(page: Page) {
         this.page = page;
     }
 
-    async goto(url: string): Promise<void> {
-        await this.page.goto(url);
+    async goto(): Promise<void> {
+        await this.page.goto(this.path);
+    }
+
+    async expectLoaded(): Promise<void> {
+        await this.page.waitForURL(this.path);
     }
 }

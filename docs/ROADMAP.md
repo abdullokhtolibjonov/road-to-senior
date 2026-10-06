@@ -18,13 +18,13 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-09-25)
+## Current Status (as of 2026-10-06)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 0 — Environment | ✅ done (1 fix left) | `eslint .` currently lints the generated `playwright-report/` folder and fails — add it to `ignores` (see Phase 0 step 6) |
-| 1 — Playwright fundamentals | ✅ done | `e2e/tests/login.spec.ts` logs in with raw locators |
-| 2 — POM & architecture | 🟡 in progress | `BasePage` exists, `LoginPage` is an empty shell, `users.ts` is not exported yet; no fixtures yet |
+| 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
+| 1 — Playwright fundamentals | ✅ done | |
+| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.3 done (test data, `BasePage`, `LoginPage`, `login.spec.ts` uses the fixture). Pages for 2.4 are created but mostly empty; `HeaderComponent`, `money.ts` and fixtures are partly done. See "Phase 2 — next session" below |
 | 3 — Advanced E2E | ⬜ | |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
@@ -32,6 +32,32 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 7 — CI/CD | ⬜ | |
 
 Update this table as you go — it's your progress log.
+
+### Phase 2 — next session (recorded 2026-10-06)
+
+Nothing below is committed yet. Commit first.
+
+**Fix first:**
+- [ ] Move `addToCartButton` out of `BasePage`. Not every page has it, and on the inventory page it matches 6 buttons (strict mode violation). Put it on `InventoryPage` per product and on `ProductDetails`.
+- [ ] Remove the redeclared `readonly page: Page` + `this.page = page` from `CartPage`, `CheckoutPage`, `CheckoutOverviewPage`, `InventoryPage` and `ProductDetails`. It makes `page` public; `BasePage` already provides it as `protected`.
+- [ ] `HeaderComponent`: change `constructor(readonly page: Page)` to `constructor(page: Page)` so `page` isn't a public field.
+- [ ] `ProductDetails`: `path = '..'` should be `'/inventory-item.html'`. Override `expectLoaded()` with a URL regex (`?id=N`) and wait for the back button. Consider renaming it to `ProductDetailsPage`.
+- [ ] `InventoryPage`: `path` should be `protected readonly`. Remove the unused `Locator` import (lint warning).
+- [ ] Rename the folder `e2e/pages/componenets/` to `components/` and update the imports.
+
+**Still to build:**
+- [ ] `HeaderComponent`: add `cartBadge` (optionally `resetAppStateLink`)
+- [ ] `InventoryPage`: items, names, prices, sort dropdown; `addToCart(name)`, `removeFromCart(name)`, `sortBy(option)`, `getNames()`, `getPrices()`, `openDetails(name)`
+- [ ] `ProductDetails`: name, price, add/remove buttons
+- [ ] `CartPage`: `header`, items/names/prices, `remove(name)`, `checkout()`
+- [ ] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
+- [ ] `CheckoutOverviewPage`: item names, subtotal/tax/total labels, `getSummary()` (uses `parsePrice`), `finish()`
+- [ ] `CheckoutCompletePage`: new file; complete header and back-home button
+- [ ] Fixtures: `inventoryPage`, `productDetailsPage`, `checkoutCompletePage`, a `user` option (`Role`, default `'standardUser'`), and `loggedIn`
+- [ ] A spec that uses the new pages (add item → badge → cart → checkout → complete)
+- [ ] `ARCHITECTURE.md`: fill in decisions (checkout split into 3 classes, `type` vs `interface`, file naming, fixture scope)
+
+**Suggested order:** fixes, then `cartBadge`, then `InventoryPage` + `CartPage` + a first cart spec, then the checkout pages, then the `loggedIn` fixture.
 
 ---
 
