@@ -18,13 +18,13 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-06)
+## Current Status (as of 2026-10-09)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
-| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.3 done (test data, `BasePage`, `LoginPage`, `login.spec.ts` uses the fixture). Pages for 2.4 are created but mostly empty; `HeaderComponent`, `money.ts` and fixtures are partly done. See "Phase 2 — next session" below |
+| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.5 mostly done: `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`; `login`/`inventory`/`cart` specs green. Left: review fixes, sorting tests, checkout pages, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
 | 3 — Advanced E2E | ⬜ | |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
@@ -33,31 +33,47 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 2 — next session (recorded 2026-10-06)
+### Phase 2 — next session (recorded 2026-10-09)
 
-Nothing below is committed yet. Commit first.
+**State:** typecheck + lint clean, 3/3 E2E tests green (`login`, `inventory`, `cart`). Uncommitted
+work: `CartPage`, `InventoryPage` changes, `cart.spec.ts`, `inventory.spec.ts`, this file.
+**Commit first:** `git add -A && git commit -m "phase 2: InventoryPage/CartPage + inventory and cart specs"`
 
-**Fix first:**
-- [ ] Move `addToCartButton` out of `BasePage`. Not every page has it, and on the inventory page it matches 6 buttons (strict mode violation). Put it on `InventoryPage` per product and on `ProductDetails`.
-- [ ] Remove the redeclared `readonly page: Page` + `this.page = page` from `CartPage`, `CheckoutPage`, `CheckoutOverviewPage`, `InventoryPage` and `ProductDetails`. It makes `page` public; `BasePage` already provides it as `protected`.
-- [ ] `HeaderComponent`: change `constructor(readonly page: Page)` to `constructor(page: Page)` so `page` isn't a public field.
-- [ ] `ProductDetails`: `path = '..'` should be `'/inventory-item.html'`. Override `expectLoaded()` with a URL regex (`?id=N`) and wait for the back button. Consider renaming it to `ProductDetailsPage`.
-- [ ] `InventoryPage`: `path` should be `protected readonly`. Remove the unused `Locator` import (lint warning).
-- [ ] Rename the folder `e2e/pages/componenets/` to `components/` and update the imports.
+**Done since 2026-10-06:** all 6 "fix first" items (folder renamed to `components/`,
+`ProductDetailsPage` with URL-regex `expectLoaded()`, no public `page` fields, `addToCartButton`
+removed from `BasePage`); `HeaderComponent.cartBadge` + `resetAppStateLink`; `InventoryPage`
+(`addToCart`, `remove`, `getNames`, `getPrices(): number[]`, `sortBy(SortOption)`, private
+`inventoryItems` getter); `CartPage` (`getNames`, `getPrices`, `remove`, `checkout`,
+`expectLoaded`); `inventoryPage` fixture; login via `test.beforeEach` in both specs.
+
+**Fix first (from review 2026-10-09):**
+- [ ] `cart.spec.ts`: after opening the cart it calls `inventoryPage.getNames()` — works only
+      because both pages share the test id. Use `await inventoryPage.headerComponent.openCart()`,
+      `await cartPage.expectLoaded()`, then `cartPage.getNames()`. Also fix the title typo
+      ("to cart to cart").
+- [ ] `cart.spec.ts`: `arrayContaining` passes even with extra items — use an exact `toEqual([...])`.
+- [ ] Flakiness risk: `getNames()` right after `remove()` reads the list once with no auto-wait
+      (`allTextContents()` doesn't retry). Prefer a web-first assertion that retries, e.g. expose
+      `readonly itemNames: Locator` and `await expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack'])`.
+- [ ] `InventoryPage.sortBy`: still `locator('[data-test="product-sort-container"]')` → `getByTestId`.
+- [ ] `CartPage`: add `readonly header: HeaderComponent`.
+- [ ] `ProductDetailsPage.addToCartButton` is `protected` and unused — make it public or add
+      `addToCart()`; add `name`/`price` locators.
 
 **Still to build:**
-- [ ] `HeaderComponent`: add `cartBadge` (optionally `resetAppStateLink`)
-- [ ] `InventoryPage`: items, names, prices, sort dropdown; `addToCart(name)`, `removeFromCart(name)`, `sortBy(option)`, `getNames()`, `getPrices()`, `openDetails(name)`
-- [ ] `ProductDetails`: name, price, add/remove buttons
-- [ ] `CartPage`: `header`, items/names/prices, `remove(name)`, `checkout()`
+- [ ] `inventory.spec.ts`: sorting tests — `sortBy('lohi')` → prices equal `[...prices].sort((a, b) => a - b)`;
+      `sortBy('za')` → names equal `[...names].sort().reverse()`
 - [ ] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
 - [ ] `CheckoutOverviewPage`: item names, subtotal/tax/total labels, `getSummary()` (uses `parsePrice`), `finish()`
 - [ ] `CheckoutCompletePage`: new file; complete header and back-home button
-- [ ] Fixtures: `inventoryPage`, `productDetailsPage`, `checkoutCompletePage`, a `user` option (`Role`, default `'standardUser'`), and `loggedIn`
-- [ ] A spec that uses the new pages (add item → badge → cart → checkout → complete)
+- [ ] Fixtures: `productDetailsPage`, `checkoutCompletePage`, a `user` option (`Role`, default
+      `'standardUser'`), and `loggedIn` (replaces the `beforeEach` login hooks)
+- [ ] Checkout spec (add item → badge → cart → checkout → complete)
 - [ ] `ARCHITECTURE.md`: fill in decisions (checkout split into 3 classes, `type` vs `interface`, file naming, fixture scope)
+- Later (Phase 3): `storageState` task — see Phase 3 step 3.
 
-**Suggested order:** fixes, then `cartBadge`, then `InventoryPage` + `CartPage` + a first cart spec, then the checkout pages, then the `loggedIn` fixture.
+**Suggested order:** commit → fixes above → sorting tests → checkout pages + spec → `loggedIn`
+fixture → `ARCHITECTURE.md`.
 
 ---
 
@@ -157,6 +173,19 @@ Step-by-step (details in `E2E-TESTING.md` → "Phase 3 walkthrough"):
    4 login error messages).
 3. **Auth via `storageState`:** a `setup` project that logs in once and saves cookies to
    `playwright/.auth/standard.json`; other tests reuse it (much faster than UI login each time).
+
+   > **Task (recorded 2026-10-09):** replace the per-test UI login (`beforeEach` / `loggedIn`
+   > fixture from Phase 2) with `storageState`.
+   > - [ ] `e2e/auth.setup.ts`: log in with `LoginPage.loginAs('standardUser')`, wait for
+   >   `/inventory.html`, then `await page.context().storageState({ path: 'playwright/.auth/standard.json' })`
+   > - [ ] `playwright.config.ts`: add a `setup` project (`testMatch: /.*\.setup\.ts/`); E2E projects
+   >   get `dependencies: ['setup']` and `use: { storageState: 'playwright/.auth/standard.json' }`
+   > - [ ] Add `playwright/.auth/` to `.gitignore` (it holds a session cookie)
+   > - [ ] `login.spec.ts` must start logged out: `test.use({ storageState: { cookies: [], origins: [] } })`
+   > - [ ] Other roles (`problemUser`, …): one state file per role, or keep UI login for those specs
+   > - [ ] Remove the now-redundant login from `beforeEach` / `loggedIn`; tests start with
+   >   `inventoryPage.goto()`
+   > - [ ] Compare suite runtime before/after
 4. **Network interception** with `page.route` (block images, delay resources, fake a 500).
 5. **Tags:** `test('...', { tag: '@smoke' }, ...)` and run with `--grep @smoke`.
 6. **Cross-browser:** add `firefox` (and optionally `webkit`) to `projects`.
