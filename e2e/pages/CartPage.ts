@@ -1,11 +1,15 @@
 import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage';
 import { parsePrice } from '../utils/money';
+import { HeaderComponent } from './components/HeaderComponent';
 
 export class CartPage extends BasePage {
     protected readonly path = '/cart.html';
     readonly checkoutButton: Locator
     readonly continueShoppingButton: Locator
+    readonly headerComponent: HeaderComponent
+    readonly itemNames: Locator
+
     private get inventoryItems() {
         return this.page.getByTestId('inventory-item')
     }
@@ -14,6 +18,8 @@ export class CartPage extends BasePage {
         super(page)
         this.checkoutButton = page.getByTestId('checkout')
         this.continueShoppingButton = page.getByTestId('continue-shopping')
+        this.headerComponent = new HeaderComponent(page)
+        this.itemNames = page.getByTestId('inventory-item-name')
     }
 
     override async expectLoaded(): Promise<void> {
@@ -22,7 +28,7 @@ export class CartPage extends BasePage {
     }
     
     async getNames(): Promise<string[]> {
-        return await this.page.getByTestId('inventory-item-name').allTextContents()
+        return await this.itemNames.allTextContents()
     }
 
     async getPrices(): Promise<number[]> {

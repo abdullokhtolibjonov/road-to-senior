@@ -44,6 +44,6 @@ export class InventoryPage extends BasePage {
     }
 
     async sortBy(option: SortOption): Promise<void> {
-        await this.page.locator('[data-test="product-sort-container"]').selectOption(option)
+        await this.page.getByTestId('product-sort-container').selectOption(option)
     }
 }

@@ -6,17 +6,16 @@ test.beforeEach(async ({ loginPage, inventoryPage }) => {
     await inventoryPage.expectLoaded()
 })
 
-test('add 2 items to cart to cart and remove 1 of them on cart', async ({ cartPage, inventoryPage }) => {
+test('add 2 items to cart and remove 1 of them from cart', async ({ cartPage, inventoryPage }) => {
     await inventoryPage.addToCart('Sauce Labs Backpack')
     await inventoryPage.addToCart('Sauce Labs Bike Light')
     await expect(inventoryPage.headerComponent.cartBadge).toHaveText('2')
 
     await inventoryPage.headerComponent.cartButton.click()
-    const itemNames = await inventoryPage.getNames()
+    const itemNames = await cartPage.getNames()
 
-    expect(itemNames).toEqual(expect.arrayContaining(['Sauce Labs Backpack', 'Sauce Labs Bike Light']))
+    expect(itemNames).toEqual(['Sauce Labs Backpack', 'Sauce Labs Bike Light'])
 
     await cartPage.remove('Sauce Labs Bike Light')
-    const remainingItemNames = await cartPage.getNames()
-    expect(remainingItemNames).toEqual(['Sauce Labs Backpack'])
+    expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack'])
 })

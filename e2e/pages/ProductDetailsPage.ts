@@ -21,4 +21,8 @@ export class ProductDetailsPage extends BasePage {
         await expect(this.page).toHaveURL(/inventory-item\.html\?id=\d+/);
         await expect(this.backToProductsButton).toBeVisible();
     }
+
+    protected async addToCart(): Promise<void> {
+        await this.addToCartButton.click();
+    }
 }
