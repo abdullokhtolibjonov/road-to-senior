@@ -12,10 +12,10 @@ test('add 2 items to cart and remove 1 of them from cart', async ({ cartPage, in
     await expect(inventoryPage.headerComponent.cartBadge).toHaveText('2')
 
     await inventoryPage.headerComponent.cartButton.click()
-    const itemNames = await cartPage.getNames()
+    await cartPage.expectLoaded()
 
-    expect(itemNames).toEqual(['Sauce Labs Backpack', 'Sauce Labs Bike Light'])
+    await expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack', 'Sauce Labs Bike Light'])
 
     await cartPage.remove('Sauce Labs Bike Light')
-    expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack'])
+    await expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack'])
 })
