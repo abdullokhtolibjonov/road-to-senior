@@ -24,7 +24,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
-| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.5 mostly done: `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`; `login`/`inventory`/`cart` specs green. Left: review fixes, sorting tests, checkout pages, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
+| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.5 mostly done: `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`; `login`/`inventory`/`cart` specs green; review fixes done. Left: sorting tests, checkout pages, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
 | 3 — Advanced E2E | ⬜ | |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
@@ -33,32 +33,28 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 2 — next session (recorded 2026-10-09)
+### Phase 2 — next session (updated 2026-10-09, end of day)
 
-**State:** typecheck + lint clean, 3/3 E2E tests green (`login`, `inventory`, `cart`). Uncommitted
-work: `CartPage`, `InventoryPage` changes, `cart.spec.ts`, `inventory.spec.ts`, this file.
-**Commit first:** `git add -A && git commit -m "phase 2: InventoryPage/CartPage + inventory and cart specs"`
+**State:** typecheck + lint clean, 3/3 E2E tests green (`login`, `inventory`, `cart`). Everything
+committed (`46a62c1`).
 
-**Done since 2026-10-06:** all 6 "fix first" items (folder renamed to `components/`,
-`ProductDetailsPage` with URL-regex `expectLoaded()`, no public `page` fields, `addToCartButton`
-removed from `BasePage`); `HeaderComponent.cartBadge` + `resetAppStateLink`; `InventoryPage`
-(`addToCart`, `remove`, `getNames`, `getPrices(): number[]`, `sortBy(SortOption)`, private
-`inventoryItems` getter); `CartPage` (`getNames`, `getPrices`, `remove`, `checkout`,
-`expectLoaded`); `inventoryPage` fixture; login via `test.beforeEach` in both specs.
+**Done 2026-10-09:** all review fixes — `cart.spec.ts` now opens the cart, calls
+`cartPage.expectLoaded()` and uses web-first `await expect(cartPage.itemNames).toHaveText([...])`
+(exact list, retries); `CartPage.itemNames` + `headerComponent`; `sortBy` uses `getByTestId`;
+`ProductDetailsPage` has public `addToCart()` + `name`/`price` locators.
 
-**Fix first (from review 2026-10-09):**
-- [ ] `cart.spec.ts`: after opening the cart it calls `inventoryPage.getNames()` — works only
-      because both pages share the test id. Use `await inventoryPage.headerComponent.openCart()`,
-      `await cartPage.expectLoaded()`, then `cartPage.getNames()`. Also fix the title typo
-      ("to cart to cart").
-- [ ] `cart.spec.ts`: `arrayContaining` passes even with extra items — use an exact `toEqual([...])`.
-- [ ] Flakiness risk: `getNames()` right after `remove()` reads the list once with no auto-wait
-      (`allTextContents()` doesn't retry). Prefer a web-first assertion that retries, e.g. expose
-      `readonly itemNames: Locator` and `await expect(cartPage.itemNames).toHaveText(['Sauce Labs Backpack'])`.
-- [ ] `InventoryPage.sortBy`: still `locator('[data-test="product-sort-container"]')` → `getByTestId`.
-- [ ] `CartPage`: add `readonly header: HeaderComponent`.
-- [ ] `ProductDetailsPage.addToCartButton` is `protected` and unused — make it public or add
-      `addToCart()`; add `name`/`price` locators.
+**Learned:** web-first assertions (`await expect(locator).toHaveText(...)` retries) vs one-shot
+reads (`allTextContents()` + `expect(array)`); always `await` a locator `expect`.
+
+**▶ Start here next session: sorting tests in `inventory.spec.ts`**
+- `sortBy('lohi')` → `prices` equal `[...prices].sort((a, b) => a - b)` (copy first — `.sort()` mutates;
+  comparator needed — default sort compares as strings)
+- `sortBy('za')` → `names` equal `[...names].sort().reverse()`
+- Before reading the array, wait with a web-first assertion (e.g. add `readonly prices: Locator` to
+  `InventoryPage`, `await expect(inventoryPage.prices.first()).toHaveText('$7.99')`)
+- Optional: data-driven loop for all 4 options (`az`, `za`, `lohi`, `hilo`)
+- Break it on purpose (`b - a`) and confirm it fails
+- Optional: enable ESLint `@typescript-eslint/no-floating-promises` to catch missing `await`
 
 **Still to build:**
 - [ ] `inventory.spec.ts`: sorting tests — `sortBy('lohi')` → prices equal `[...prices].sort((a, b) => a - b)`;
@@ -72,7 +68,7 @@ removed from `BasePage`); `HeaderComponent.cartBadge` + `resetAppStateLink`; `In
 - [ ] `ARCHITECTURE.md`: fill in decisions (checkout split into 3 classes, `type` vs `interface`, file naming, fixture scope)
 - Later (Phase 3): `storageState` task — see Phase 3 step 3.
 
-**Suggested order:** commit → fixes above → sorting tests → checkout pages + spec → `loggedIn`
+**Suggested order:** sorting tests → checkout pages + spec → `loggedIn`
 fixture → `ARCHITECTURE.md`.
 
 ---
