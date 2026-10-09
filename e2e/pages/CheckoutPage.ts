@@ -1,6 +1,6 @@
 import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage'
-import { HeaderComponent } from './componenets/HeaderComponent'
+import { HeaderComponent } from './components/HeaderComponent'
 
 export class CheckoutPage extends BasePage {
     protected readonly path = '/checkout-step-one.html';

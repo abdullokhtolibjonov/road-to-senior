@@ -5,7 +5,7 @@ export function parsePrice(text: string | null): number {
 
     const priceText = text.match(/\$(\d+(?:\.\d+)?)/)?.[1];
 
-    if (!priceText || priceText === undefined) {
+    if (!priceText) {
         throw new Error('Cannot parse price from string: ' + text);
     }
 
