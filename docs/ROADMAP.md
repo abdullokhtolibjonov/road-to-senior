@@ -18,13 +18,13 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-09)
+## Current Status (as of 2026-10-11)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
-| 2 — POM & architecture | 🟡 in progress | Steps 2.1–2.5 mostly done: `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`; `login`/`inventory`/`cart` specs green; review fixes done. Left: sorting tests, checkout pages, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
+| 2 — POM & architecture | 🟡 in progress | `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`, `CheckoutPage` (step one); `login`/`inventory` (incl. sorting)/`cart`/`checkout` specs green. Left: `CheckoutOverviewPage`, `CheckoutCompletePage`, checkout happy-path spec, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
 | 3 — Advanced E2E | ⬜ | |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
@@ -33,43 +33,41 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 2 — next session (updated 2026-10-09, end of day)
+### Phase 2 — next session (updated 2026-10-11, end of day)
 
-**State:** typecheck + lint clean, 3/3 E2E tests green (`login`, `inventory`, `cart`). Everything
-committed (`46a62c1`).
+**State:** typecheck + lint clean, E2E specs green (`login`, `inventory` incl. sorting, `cart`,
+`checkout`). Everything committed (`ca37a60`).
 
-**Done 2026-10-09:** all review fixes — `cart.spec.ts` now opens the cart, calls
-`cartPage.expectLoaded()` and uses web-first `await expect(cartPage.itemNames).toHaveText([...])`
-(exact list, retries); `CartPage.itemNames` + `headerComponent`; `sortBy` uses `getByTestId`;
-`ProductDetailsPage` has public `addToCart()` + `name`/`price` locators.
+**Done 2026-10-10/11:** sorting tests (`077b67f`); `CheckoutPage` step one — `errorMessage`,
+`fillInfo(info: Partial<CheckoutInfo>)`, `continue()`; `CheckoutInfo` type in `utils/types/types.ts`;
+`checkout.spec.ts` checks the 3 required-field error messages (`MESSAGES.*_required`).
 
-**Learned:** web-first assertions (`await expect(locator).toHaveText(...)` retries) vs one-shot
-reads (`allTextContents()` + `expect(array)`); always `await` a locator `expect`.
+**Learned:** `Partial<T>` for optional form input + `!== undefined` checks; a locator is not a
+promise — `await expect(locator)`, never `expect(await locator)`.
 
-**▶ Start here next session: sorting tests in `inventory.spec.ts`**
-- `sortBy('lohi')` → `prices` equal `[...prices].sort((a, b) => a - b)` (copy first — `.sort()` mutates;
-  comparator needed — default sort compares as strings)
-- `sortBy('za')` → `names` equal `[...names].sort().reverse()`
-- Before reading the array, wait with a web-first assertion (e.g. add `readonly prices: Locator` to
-  `InventoryPage`, `await expect(inventoryPage.prices.first()).toHaveText('$7.99')`)
-- Optional: data-driven loop for all 4 options (`az`, `za`, `lohi`, `hilo`)
-- Break it on purpose (`b - a`) and confirm it fails
-- Optional: enable ESLint `@typescript-eslint/no-floating-promises` to catch missing `await`
+**Small cleanup:** remove the unused `InventoryPage` import in `e2e/tests/checkout.spec.ts`.
+
+**▶ Start here next session: `CheckoutOverviewPage`** (`/checkout-step-two.html`)
+- Locators: `itemNames`, `subtotalLabel`, `taxLabel`, `totalLabel` (find test IDs with codegen/devtools)
+- `getSummary()` → `{ subtotal, tax, total }` as numbers via `parsePrice`; consider a
+  `CheckoutSummary` type next to `CheckoutInfo`
+- `finish()` clicks the finish button
+- Test idea: `subtotal` = sum of item prices, `total` = `subtotal + tax` — use
+  `toBeCloseTo(x, 2)`, not `toBe` (floating point)
 
 **Still to build:**
-- [x] `inventory.spec.ts`: sorting tests — `sortBy('lohi')` → prices equal `[...prices].sort((a, b) => a - b)`;
-      `sortBy('za')` → names equal `[...names].sort().reverse()`
-- [ ] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
+- [x] `inventory.spec.ts`: sorting tests
+- [x] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
 - [ ] `CheckoutOverviewPage`: item names, subtotal/tax/total labels, `getSummary()` (uses `parsePrice`), `finish()`
 - [ ] `CheckoutCompletePage`: new file; complete header and back-home button
 - [ ] Fixtures: `productDetailsPage`, `checkoutCompletePage`, a `user` option (`Role`, default
       `'standardUser'`), and `loggedIn` (replaces the `beforeEach` login hooks)
-- [ ] Checkout spec (add item → badge → cart → checkout → complete)
+- [ ] Checkout happy-path spec (add item → badge → cart → checkout → overview totals → complete)
 - [ ] `ARCHITECTURE.md`: fill in decisions (checkout split into 3 classes, `type` vs `interface`, file naming, fixture scope)
 - Later (Phase 3): `storageState` task — see Phase 3 step 3.
 
-**Suggested order:** sorting tests → checkout pages + spec → `loggedIn`
-fixture → `ARCHITECTURE.md`.
+**Suggested order:** `CheckoutOverviewPage` → `CheckoutCompletePage` → happy-path spec →
+`loggedIn` fixture → `ARCHITECTURE.md`.
 
 ---
 
