@@ -57,7 +57,7 @@ reads (`allTextContents()` + `expect(array)`); always `await` a locator `expect`
 - Optional: enable ESLint `@typescript-eslint/no-floating-promises` to catch missing `await`
 
 **Still to build:**
-- [ ] `inventory.spec.ts`: sorting tests — `sortBy('lohi')` → prices equal `[...prices].sort((a, b) => a - b)`;
+- [x] `inventory.spec.ts`: sorting tests — `sortBy('lohi')` → prices equal `[...prices].sort((a, b) => a - b)`;
       `sortBy('za')` → names equal `[...names].sort().reverse()`
 - [ ] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
 - [ ] `CheckoutOverviewPage`: item names, subtotal/tax/total labels, `getSummary()` (uses `parsePrice`), `finish()`

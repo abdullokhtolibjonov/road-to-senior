@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Page, Locator } from '@playwright/test'
 import type { SortOption } from '../utils/types/types';
 import { BasePage } from './BasePage';
 import { HeaderComponent } from './components/HeaderComponent';
@@ -7,7 +7,8 @@ import { parsePrice } from '../utils/money';
 export class InventoryPage extends BasePage {
     readonly headerComponent: HeaderComponent
     protected readonly path = '/inventory.html'
-
+    readonly prices: Locator
+    readonly itemNames: Locator
     private get inventoryItems() {
         return this.page.getByTestId('inventory-item')
     }
@@ -15,6 +16,8 @@ export class InventoryPage extends BasePage {
     constructor(page: Page) {
         super(page)
         this.headerComponent = new HeaderComponent(page)
+        this.prices = page.getByTestId('inventory-item-price')
+        this.itemNames = page.getByTestId('inventory-item-name')
     }
 
     async addToCart(name: string): Promise<void> {
@@ -32,13 +35,13 @@ export class InventoryPage extends BasePage {
     }
 
     async getNames(): Promise<string[]> {
-        return await this.page.getByTestId('inventory-item-name').allTextContents()
+        return await this.itemNames.allTextContents()
     }
 
     async getPrices(): Promise<number[]> {
-        const textPrices = await this.page.getByTestId('inventory-item-price').allTextContents()
+        const textPrices = await this.prices.allTextContents()
 
-        const numberPrices = textPrices.map(p => parsePrice(p));
+        const numberPrices = textPrices.map(parsePrice);
 
         return numberPrices
     }
