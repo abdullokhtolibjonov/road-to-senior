@@ -4,7 +4,7 @@ import { BasePage } from "./BasePage";
 export class CheckoutCompletePage extends BasePage {
     protected readonly path = '/checkout-complete.html'
     readonly successMessage: Locator
-    readonly generatePdfbutton: Locator
+    readonly generatePdfButton: Locator
     readonly backHomeButton: Locator
 
     constructor(page: Page) {
