@@ -48,7 +48,7 @@ test.describe('Login errors', () => {
     }
 })
 
-test(`login happy case`, async ({ loginPage, inventoryPage }) => {
+test('standard user logs in and lands on inventory', async ({ loginPage, inventoryPage }) => {
     await loginPage.goto()
     await loginPage.loginAs('standardUser')
     await inventoryPage.expectLoaded()
