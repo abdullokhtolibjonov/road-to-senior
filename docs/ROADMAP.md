@@ -18,14 +18,14 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-12)
+## Current Status (as of 2026-10-12, end of day)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 next | See "Phase 3 — start here" below |
+| 3 — Advanced E2E | 🟡 in progress | Steps 1–2 done (scenario list, data-driven login). Next: step 3 `storageState`. See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -34,35 +34,44 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 3 — start here (updated 2026-10-12)
+### Phase 3 — next session (updated 2026-10-12, end of day)
 
-**State:** Phase 2 done. typecheck + lint clean (0 warnings), 7 chromium tests green. Last commit
-`09f918a`.
+**State:** typecheck + lint clean, 11 chromium tests green (last code commit `ec74d64`).
+Scenario list (`E2E-TESTING.md` §4): **10 done, 5 partial, 13 open**.
+Uncommitted: `e2e/tests/auth.setup.ts` exists but is **empty** (storageState task just started).
 
-**Done 2026-10-12:** `CheckoutOverviewPage.getSummary()` → `CheckoutSummary` (reads labels only);
-`CheckoutCompletePage` with `backHome()`; checkout spec split into required-field errors + happy
-path (subtotal from `PRODUCTS`, `total ≈ subtotal + tax`, item names, back home → empty cart);
-`loggedIn: void` fixture replaces the login `beforeEach` in cart/checkout/inventory specs; ESLint
-`args: "none"` for `e2e/tests/**` only; `ARCHITECTURE.md` Phase 1–2 rows filled in.
+**Done 2026-10-12 (Phase 3):** step 1 — scenario list reviewed against existing tests; step 2 —
+data-driven login errors in `login.spec.ts` (`LoginErrorCase` type + `errorCases` array + `for`
+loop inside `test.describe`, 4 cases using `USER_ROLES`/`PASSWORD`/`MESSAGES`);
+`LoginPage.login(username, password)` added and `loginAs(role)` now calls it; `PASSWORD` exported.
 
-**Learned:** page objects return data, tests decide what's correct (expected values from test data,
-not from the UI); fixtures are lazy — naming one in the parameters runs it; `use()` splits setup
-from teardown; a later ESLint flat-config block overrides an earlier one for the files it matches;
-check locators in the state a real user reaches (the PDF button only exists after a real order).
+**Learned:** a floating promise (calling an `async` method without `await`) can pass tests by luck
+and hide failures — every async call needs `await`; data-driven tests need unique titles; spec files
+shouldn't `export` anything; assert the error first, then "still on login page" (otherwise the URL
+check passes before the login request finishes).
 
-**Small cleanups (optional):**
-- `e2e/test-data/users.ts`: `interface User` → `type User` (ARCHITECTURE.md says `type` everywhere)
-- Error-messages test in `checkout.spec.ts` adds 2 items; 1 is enough
-- Optional Phase 2 extra: a `user` option (`Role`, default `'standardUser'`) so
-  `test.use({ user: 'problemUser' })` makes `loggedIn` log in as that role
-- Commit messages: describe the change (no more `minor change`)
+**Optional:** enable `@typescript-eslint/no-floating-promises` (needs type-aware linting in
+`eslint.config.mjs`) so a missing `await` becomes a lint error.
 
-**▶ Start here next session: Phase 3 step 1–2 — scenario list + data-driven login tests**
-- Write the scenario list from `E2E-TESTING.md` → "Phase 3 walkthrough"
-- Turn the login error cases (locked user, wrong password, empty username, empty password) into
-  one array of cases + a `for` loop that generates one `test()` per case, using `MESSAGES`
-- Then step 3: `storageState` (task list in Phase 3 below) — it replaces the UI login inside
-  `loggedIn`
+**▶ Start here next session: step 3 — `storageState`** (Claude explained the task in detail on
+2026-10-12; summary):
+1. Note the current suite time (`npx playwright test --project=chromium`, was ~4.4s) for comparison
+2. `e2e/tests/auth.setup.ts`: `import { test as setup }` from fixtures; `goto` → `loginAs('standardUser')`
+   → `inventoryPage.expectLoaded()` → `page.context().storageState({ path: STANDARD_AUTH_FILE })`;
+   export `STANDARD_AUTH_FILE = 'playwright/.auth/standard.json'`
+3. `playwright.config.ts`: add `{ name: 'setup', testMatch: /.*\.setup\.ts/ }`; `chromium` gets
+   `dependencies: ['setup']` and `use.storageState: 'playwright/.auth/standard.json'`
+4. `loggedIn` fixture: drop the UI login → `inventoryPage.goto()` + `expectLoaded()` + `use()`
+   (remove `loginPage` from its params) — specs stay unchanged
+5. `login.spec.ts`: `test.use({ storageState: { cookies: [], origins: [] } })` so it starts logged out
+6. `.gitignore` already has `/playwright/.auth/` ✅
+7. Check: `[setup]` runs first, 11 tests + 1 setup green, `standard.json` contains `session-username`;
+   compare runtime
+
+**Then (Phase 3 order):** step 4 network interception (`page.route`) → step 5 tags (`@smoke`) →
+step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
+Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after
+remove, data-driven checkout errors, order math in cents with tax rate.
 
 ---
 
