@@ -810,6 +810,8 @@ Fixtures are **lazy**: a test that doesn't list `loggedIn` never logs in.
 
 Tick them off as you write them. Suggested file in brackets.
 
+**Status 2026-10-12:** 5 done, 5 partial, 18 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
+
 **Login** `[login.spec.ts]`
 - [x] Successful login → redirected to inventory
 - [ ] Locked-out user → error message shown, still on login page
@@ -823,24 +825,24 @@ Tick them off as you write them. Suggested file in brackets.
 
 **Inventory** `[inventory.spec.ts]`
 - [ ] 6 products rendered (`toHaveCount(6)`)
-- [ ] Sort A→Z, Z→A: compare displayed names against a sorted copy
-- [ ] Sort price low→high, high→low: compare displayed prices against a sorted copy
-- [ ] Add to cart → badge = 1; button text changes to "Remove"
-- [ ] Remove from inventory page → badge disappears
+- [x] Sort A→Z, Z→A: compare displayed names against a sorted copy
+- [x] Sort price low→high, high→low: compare displayed prices against a sorted copy
+- [ ] Add to cart → badge = 1; button text changes to "Remove" — *partial: badge checked, button text not asserted*
+- [x] Remove from inventory page → badge disappears
 - [ ] Product details page shows the same name/price as the card; add to cart from there
 - [ ] `problem_user`: sorting is broken → mark with `test.fail()` (documents a known bug)
 
 **Cart** `[cart.spec.ts]`
-- [ ] Cart lists added items with correct names and prices
-- [ ] Remove item in cart updates list and badge
+- [ ] Cart lists added items with correct names and prices — *partial: names checked, prices not*
+- [ ] Remove item in cart updates list and badge — *partial: list checked, badge not*
 - [ ] Continue Shopping returns to inventory, cart kept
 - [ ] Cart survives a page reload (it's in localStorage)
 
 **Checkout** `[checkout.spec.ts]`
-- [ ] Full happy path (info → overview → complete; "Thank you for your order!"; badge gone)
-- [ ] Missing first name / last name / postal code → matching error (data-driven)
+- [x] Full happy path (info → overview → complete; "Thank you for your order!"; badge gone)
+- [ ] Missing first name / last name / postal code → matching error (data-driven) — *partial: all 3 errors checked in one test, not data-driven yet*
 - [ ] Order math: subtotal = sum of item prices; tax = round(subtotal × 0.08, 2); total =
-      subtotal + tax — compare in cents
+      subtotal + tax — compare in cents — *partial: subtotal from `PRODUCTS` and total = subtotal + tax checked with `toBeCloseTo`; tax rate and cents comparison not done*
 - [ ] Cancel on step 1 returns to cart
 
 **Cross-cutting (Phase 3)** `[network.spec.ts]`
