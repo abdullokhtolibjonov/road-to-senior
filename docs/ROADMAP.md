@@ -18,56 +18,51 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-11)
+## Current Status (as of 2026-10-12)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
-| 2 — POM & architecture | 🟡 in progress | `LoginPage`, `InventoryPage`, `CartPage`, `HeaderComponent`, `ProductDetailsPage`, `CheckoutPage` (step one); `login`/`inventory` (incl. sorting)/`cart`/`checkout` specs green. Left: `CheckoutOverviewPage`, `CheckoutCompletePage`, checkout happy-path spec, `loggedIn` fixture, `ARCHITECTURE.md`. See "Phase 2 — next session" below |
-| 3 — Advanced E2E | ⬜ | |
+| 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
+| 3 — Advanced E2E | 🟡 next | See "Phase 3 — start here" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
+| 8 — Native mobile (Appium + WebdriverIO) | ⬜ | Android only (Windows); app: WebdriverIO Native Demo App |
 
 Update this table as you go — it's your progress log.
 
-### Phase 2 — next session (updated 2026-10-11, end of day)
+### Phase 3 — start here (updated 2026-10-12)
 
-**State:** typecheck + lint clean, E2E specs green (`login`, `inventory` incl. sorting, `cart`,
-`checkout`). Everything committed (`ca37a60`).
+**State:** Phase 2 done. typecheck + lint clean (0 warnings), 7 chromium tests green. Last commit
+`09f918a`.
 
-**Done 2026-10-10/11:** sorting tests (`077b67f`); `CheckoutPage` step one — `errorMessage`,
-`fillInfo(info: Partial<CheckoutInfo>)`, `continue()`; `CheckoutInfo` type in `utils/types/types.ts`;
-`checkout.spec.ts` checks the 3 required-field error messages (`MESSAGES.*_required`).
+**Done 2026-10-12:** `CheckoutOverviewPage.getSummary()` → `CheckoutSummary` (reads labels only);
+`CheckoutCompletePage` with `backHome()`; checkout spec split into required-field errors + happy
+path (subtotal from `PRODUCTS`, `total ≈ subtotal + tax`, item names, back home → empty cart);
+`loggedIn: void` fixture replaces the login `beforeEach` in cart/checkout/inventory specs; ESLint
+`args: "none"` for `e2e/tests/**` only; `ARCHITECTURE.md` Phase 1–2 rows filled in.
 
-**Learned:** `Partial<T>` for optional form input + `!== undefined` checks; a locator is not a
-promise — `await expect(locator)`, never `expect(await locator)`.
+**Learned:** page objects return data, tests decide what's correct (expected values from test data,
+not from the UI); fixtures are lazy — naming one in the parameters runs it; `use()` splits setup
+from teardown; a later ESLint flat-config block overrides an earlier one for the files it matches;
+check locators in the state a real user reaches (the PDF button only exists after a real order).
 
-**Small cleanup:** remove the unused `InventoryPage` import in `e2e/tests/checkout.spec.ts`.
+**Small cleanups (optional):**
+- `e2e/test-data/users.ts`: `interface User` → `type User` (ARCHITECTURE.md says `type` everywhere)
+- Error-messages test in `checkout.spec.ts` adds 2 items; 1 is enough
+- Optional Phase 2 extra: a `user` option (`Role`, default `'standardUser'`) so
+  `test.use({ user: 'problemUser' })` makes `loggedIn` log in as that role
+- Commit messages: describe the change (no more `minor change`)
 
-**▶ Start here next session: `CheckoutOverviewPage`** (`/checkout-step-two.html`)
-- Locators: `itemNames`, `subtotalLabel`, `taxLabel`, `totalLabel` (find test IDs with codegen/devtools)
-- `getSummary()` → `{ subtotal, tax, total }` as numbers via `parsePrice`; consider a
-  `CheckoutSummary` type next to `CheckoutInfo`
-- `finish()` clicks the finish button
-- Test idea: `subtotal` = sum of item prices, `total` = `subtotal + tax` — use
-  `toBeCloseTo(x, 2)`, not `toBe` (floating point)
-
-**Still to build:**
-- [x] `inventory.spec.ts`: sorting tests
-- [x] `CheckoutPage` (step one): `errorMessage`, `fillInfo(info: Partial<...>)`, `continue()`
-- [ ] `CheckoutOverviewPage`: item names, subtotal/tax/total labels, `getSummary()` (uses `parsePrice`), `finish()`
-- [ ] `CheckoutCompletePage`: new file; complete header and back-home button
-- [ ] Fixtures: `productDetailsPage`, `checkoutCompletePage`, a `user` option (`Role`, default
-      `'standardUser'`), and `loggedIn` (replaces the `beforeEach` login hooks)
-- [ ] Checkout happy-path spec (add item → badge → cart → checkout → overview totals → complete)
-- [ ] `ARCHITECTURE.md`: fill in decisions (checkout split into 3 classes, `type` vs `interface`, file naming, fixture scope)
-- Later (Phase 3): `storageState` task — see Phase 3 step 3.
-
-**Suggested order:** `CheckoutOverviewPage` → `CheckoutCompletePage` → happy-path spec →
-`loggedIn` fixture → `ARCHITECTURE.md`.
+**▶ Start here next session: Phase 3 step 1–2 — scenario list + data-driven login tests**
+- Write the scenario list from `E2E-TESTING.md` → "Phase 3 walkthrough"
+- Turn the login error cases (locked user, wrong password, empty username, empty password) into
+  one array of cases + a `for` loop that generates one `test()` per case, using `MESSAGES`
+- Then step 3: `storageState` (task list in Phase 3 below) — it replaces the UI login inside
+  `loggedIn`
 
 ---
 
@@ -122,7 +117,7 @@ Done. Things worth re-practising if they feel shaky:
 
 ---
 
-## Phase 2 — Page Object Model & E2E Architecture 🟡
+## Phase 2 — Page Object Model & E2E Architecture ✅
 
 **Deliverable:** `e2e/pages/` with at least 4 page objects (Login, Inventory, Cart, Checkout) and a
 `BasePage`; a typed test-data module; a custom fixture file that injects page objects and a
@@ -272,6 +267,81 @@ Step-by-step:
 manual/scheduled job, reports uploaded as artifacts. Full reference YAML in `CI-CD.md`.
 
 **Exit criteria:** a fresh clone with only `npm ci` passes CI green.
+
+---
+
+## Phase 8 — Native Mobile (Appium + WebdriverIO)
+
+**Deliverable:** `mobile/` suite with its own `wdio.conf.ts` that runs TypeScript tests against the
+**WebdriverIO Native Demo App** on a local Android emulator: login/sign-up forms, form controls,
+swipe, drag and drop, and a WebView screen. Page objects + test data follow the same conventions
+as `e2e/`.
+
+**Why these tools:** Appium is the industry standard for black-box mobile automation (it tests an
+installed APK, no app source needed). WebdriverIO is its TypeScript test runner — `async`/`await`,
+`expect`, page objects — so POM/fixture habits from Phase 2 carry over. Detox needs the app's source,
+Maestro tests are YAML (no TypeScript), Espresso/XCUITest are Kotlin/Swift. **Android only on
+Windows** — iOS automation needs a Mac with Xcode.
+
+**App under test:**
+- Primary: [WebdriverIO Native Demo App](https://github.com/webdriverio/native-demo-app) — maintained,
+  built for exactly this stack. Download the Android `.apk` from its GitHub Releases.
+- Optional second app: [Sauce Labs My Demo App (React Native)](https://github.com/saucelabs/my-demo-app-rn/releases)
+  — the mobile saucedemo (catalog, sort, cart, checkout). Repo archived May 2024 (latest v1.3.0):
+  check it runs on your emulator before investing in it.
+- Never commit the `.apk` (binary, large) — add `mobile/apps/` to `.gitignore` and document the
+  download in the README (or a small download script).
+
+Step-by-step:
+
+1. **Machine setup** (expect this to take a day — it's the hardest part):
+   - Java JDK 17+ → set `JAVA_HOME`
+   - Android Studio → SDK Manager: a recent Android SDK + platform-tools; Device Manager: create a
+     Pixel emulator. Set `ANDROID_HOME` and add `platform-tools` to `PATH`
+   - Hardware virtualization enabled in BIOS; 16 GB RAM recommended
+   - Check: emulator boots, `adb devices` lists it
+   - Record every error + fix in `TROUBLESHOOTING.md` → Mobile
+2. **Appium:** `npm i -D appium` → `npx appium driver install uiautomator2` →
+   `npx appium driver doctor uiautomator2` must show no required fixes.
+   Optional: Appium Inspector (desktop app) to inspect the app's element tree — mobile's codegen.
+3. **WebdriverIO project:** `npm init wdio@latest ./mobile` → choose: Mobile testing (Appium),
+   Android, Mocha, TypeScript. Keep `mobile/` self-contained (own `wdio.conf.ts`, own `tsconfig.json`
+   with `@wdio/globals/types`) so it doesn't clash with Playwright's types.
+4. **Capabilities** in `wdio.conf.ts`: `platformName: 'Android'`,
+   `'appium:automationName': 'UiAutomator2'`, `'appium:app'`: absolute path to the `.apk`,
+   `'appium:deviceName'`. First test: app launches and the home screen is visible.
+5. **Locators:** accessibility ID first (`$('~button-login-container')`), then UiAutomator selectors,
+   XPath last. Find IDs with Appium Inspector. Why accessibility IDs: stable, fast, and the same
+   attribute serves screen readers.
+6. **Page objects:** `mobile/pages/` — `BaseScreen` (shared helpers like `waitForDisplayed`), `LoginScreen`,
+   `FormsScreen`, `SwipeScreen`, `DragScreen`, `WebviewScreen`; a `TabBar` component (composition,
+   like `HeaderComponent`).
+7. **Tests** (`mobile/tests/*.spec.ts`):
+   - login: valid + invalid email/password validation messages (data-driven, like Phase 3)
+   - sign up: password mismatch error, success dialog
+   - forms: type text, toggle switch, pick from dropdown, assert values
+   - swipe: swipe the carousel until a specific card is visible
+   - drag and drop: complete the puzzle, assert the success message
+   - WebView: switch context (`driver.getContexts()` / `driver.switchContext(...)`), assert web
+     content, switch back to `NATIVE_APP`
+8. **App state:** reset the app between tests (`driver.terminateApp` / `activateApp`, or
+   `'appium:noReset': false`) — explain the speed vs isolation trade-off in `ARCHITECTURE.md`.
+9. **Reporting:** spec reporter locally; screenshot on failure in an `afterTest` hook;
+   optional Allure (same as Phase 6).
+10. **npm scripts:** `"test:mobile": "wdio run mobile/wdio.conf.ts"` (start the emulator first).
+11. **Optional CI:** a separate, manually triggered GitHub Actions job using an Android emulator
+    action (e.g. `reactivecircus/android-emulator-runner`). Slow and heavier than browser jobs — keep
+    it out of the per-push pipeline.
+12. **Optional:** run the same suite on a cloud device (BrowserStack / Sauce Labs free trial) by
+    swapping capabilities only — proves your page objects aren't tied to one device.
+
+**TypeScript focus:** typing WebdriverIO capabilities (`WebdriverIO.Capabilities`), a generic
+`BaseScreen` helper, sharing a `type` between screens, separate `tsconfig.json` per runner and why
+global types (`$`, `driver`, `browser`) need explicit configuration.
+
+**Exit criteria:** `npm run test:mobile` is green twice in a row on a fresh emulator; adding a new
+screen object takes under 15 minutes; you can explain native vs WebView context and why a swipe
+test can be flaky (animation timing) and how you made it stable without fixed sleeps.
 
 ---
 

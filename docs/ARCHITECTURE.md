@@ -34,13 +34,13 @@ Rules:
 
 | Topic | Recommended default | Decision | Why | Phase |
 |---|---|---|---|---|
-| `type` vs `interface` | `interface` for object shapes, `type` for unions/utility/mapped types | | | 1 |
-| Locator strategy | `getByTestId` (data-test) → `getByRole` → `getByText`; never CSS classes/XPath | | | 1 |
-| File naming | `*.spec.ts` for tests, `*.setup.ts` for setup; `PascalCase.ts` for classes; `camelCase.ts` for data/utils | | | 2 |
-| Imports | relative with `.ts` extension; `import type` for types | | | 2 |
-| Page object boundary | one class per URL; shared UI as components (`HeaderComponent`) | | | 2 |
-| Where assertions live | tests (+ `expectLoaded()` in pages) | | | 2 |
-| Fixture scope | test-scoped for pages/clients; worker-scoped only for expensive shared things (auth tokens) | | | 2 |
+| `type` vs `interface` | `interface` for object shapes, `type` for unions/utility/mapped types | `type` for everything (`CheckoutInfo`, `CheckoutSummary`, `SortOption`, `MyFixtures`); the one `interface User` in `users.ts` is a leftover to align | One keyword for both shapes and unions keeps the code consistent; we never need `interface`-only features (declaration merging, `extends` chains) | 1 |
+| Locator strategy | `getByTestId` (data-test) → `getByRole` → `getByText`; never CSS classes/XPath | `getByTestId` (`testIdAttribute: 'data-test'` in config) by default; `getByRole` for buttons inside a filtered row (`Add to cart`, `Remove`) or without a test ID (`Open Menu`) | saucedemo puts `data-test` on almost everything and those IDs don't change with styling or wording; CSS classes and XPath break on markup changes | 1 |
+| File naming | `*.spec.ts` for tests, `*.setup.ts` for setup; `PascalCase.ts` for classes; `camelCase.ts` for data/utils | As recommended: `LoginPage.ts`, `HeaderComponent.ts`; `users.ts`, `money.ts`; `checkout.spec.ts` | The file name tells you what's inside (a class vs data/helpers) and Playwright finds tests by the `.spec.ts` suffix | 2 |
+| Imports | relative with `.ts` extension; `import type` for types | Relative, **without** `.ts` extension; `import type` for types (`Page`, `Locator`, `CheckoutInfo`) | Playwright's loader resolves extensionless imports, so the extension adds nothing here; `import type` makes it explicit that the import disappears at runtime | 2 |
+| Page object boundary | one class per URL; shared UI as components (`HeaderComponent`) | One class per URL: checkout is split into `CheckoutPage` (step one), `CheckoutOverviewPage` (step two), `CheckoutCompletePage`. `HeaderComponent` is *contained* by pages (composition), not inherited | Each class stays small and maps to one screen, so a broken locator is easy to find. Not every page has a header (login doesn't), so putting it in `BasePage` would give `LoginPage` a header it doesn't have | 2 |
+| Where assertions live | tests (+ `expectLoaded()` in pages) | In tests. Page objects only read and return data (`getSummary()`, `getPrices()`); the only `expect` in a page is inside `expectLoaded()` | If a page object computes the expected value (the old `getSummary()` summed prices itself), the test compares the page with itself and can't catch a wrong total. Expected values come from test data (`PRODUCTS`) | 2 |
+| Fixture scope | test-scoped for pages/clients; worker-scoped only for expensive shared things (auth tokens) | All test-scoped: page objects + a `loggedIn: void` fixture that composes `loginPage` + `inventoryPage`; specs request it with an empty `beforeEach(async ({ loggedIn }) => {})`. ESLint uses `args: "none"` for `e2e/tests/**` only, because a requested-but-unread fixture is not a bug | Each test gets a fresh page and session, so tests are independent. Login lives in one place, so Phase 3 can swap UI login for `storageState` in one function | 2 |
 | Auth strategy (E2E) | `setup` project + `storageState` for default user; `loggedIn` fixture + `user` option for others | | | 3 |
 | Tags | `@smoke`, `@regression`, feature tags (`@checkout`) | | | 3 |
 | Retries | 0 locally, 2 in CI; flaky tests fixed, not retried into green | | | 3 |
