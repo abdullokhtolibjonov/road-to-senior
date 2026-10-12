@@ -8,7 +8,13 @@ export default tseslint.config(
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn"],
+    },
+  },
+  {
+    files: ["e2e/tests/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", { args: "none" }],
     },
   },
   {

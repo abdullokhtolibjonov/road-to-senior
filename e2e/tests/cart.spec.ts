@@ -1,8 +1,6 @@
 import { expect, test } from '../fixtures/test'
 
-test.beforeEach(async ({ loggedIn }) => {
-    
-})
+test.beforeEach(async ({ loggedIn }) => {})
 
 test('add 2 items to cart and remove 1 of them from cart', async ({ cartPage, inventoryPage }) => {
     await inventoryPage.addToCart('Sauce Labs Backpack')

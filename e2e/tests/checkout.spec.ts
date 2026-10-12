@@ -3,9 +3,7 @@ import type { CheckoutInfo } from '../utils/types/types';
 import { MESSAGES } from '../test-data/messages'
 import { PRODUCTS } from '../test-data/products'
 
-test.beforeEach(async ({ loggedIn }) => {
-
-})
+test.beforeEach(async ({ loggedIn }) => {})
 
 test('checkout step one shows required-field errors', async ({ inventoryPage, cartPage, checkoutPage }) => {
     const backpackName = 'Sauce Labs Backpack'
