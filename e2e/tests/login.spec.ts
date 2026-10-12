@@ -1,7 +1,55 @@
 import { test, expect } from '../fixtures/test'
+import { MESSAGES } from '../test-data/messages';
+import { PASSWORD, USER_ROLES } from '../test-data/users';
 
-test('login as standard user', async ({ page, loginPage }) => {
+type LoginErrorCase = {
+    title: string
+    username: string
+    password: string
+    error: string
+}
+
+const errorCases: LoginErrorCase[] = [
+    {
+        title: 'locked out user',
+        username: USER_ROLES.lockedUser,
+        password: PASSWORD,
+        error: MESSAGES.locked_user
+    },
+    {
+        title: 'wrong password',
+        username: USER_ROLES.standardUser,
+        password: 'wrong',
+        error: MESSAGES.username_or_password_mismatch
+    },
+    {
+        title: 'username required',
+        username: '',
+        password: PASSWORD,
+        error: MESSAGES.username_required
+    },
+    {
+        title: 'password required',
+        username: USER_ROLES.standardUser,
+        password: '',
+        error: MESSAGES.password_required
+    }
+]
+
+test.describe('Login errors', () => {
+    for (const c of errorCases) {
+        test(`shows an error for ${c.title}`, async ({ loginPage }) => {
+            await loginPage.goto()
+            await loginPage.login(c.username, c.password)
+
+            await expect(loginPage.errorMessage).toHaveText(c.error)
+            await loginPage.expectLoaded()
+        })
+    }
+})
+
+test(`login happy case`, async ({ loginPage, inventoryPage }) => {
     await loginPage.goto()
     await loginPage.loginAs('standardUser')
-    await expect(page).toHaveURL('/inventory.html')
+    await inventoryPage.expectLoaded()
 })

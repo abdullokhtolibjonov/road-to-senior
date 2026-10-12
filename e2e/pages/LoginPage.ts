@@ -15,6 +15,10 @@ export class LoginPage extends BasePage {
 
     async loginAs(role: Role): Promise<void> {
         const { username, password } = credentialsFor(role)
+        await this.login(username, password)
+    }
+
+    async login(username: string, password: string): Promise<void> {
         await this.usernameInput.fill(username)
         await this.passwordInput.fill(password)
         await this.loginButton.click()

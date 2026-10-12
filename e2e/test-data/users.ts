@@ -14,7 +14,7 @@ export const USER_ROLES = {
 
 export type Role = keyof typeof USER_ROLES // standardUser | lockedUser | problemUser...
 
-const PASSWORD = 'secret_sauce'
+export const PASSWORD = 'secret_sauce'
 
 export function credentialsFor(key: Role): User {
     return {
