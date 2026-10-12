@@ -56,6 +56,7 @@ test('user can complete checkout with correct totals', async({ inventoryPage, ca
         lastName: 'Tolibjonov',
         postalCode: '011700'
     }
+    const expectedSubtotal = PRODUCTS[backpackName] + PRODUCTS[tshirtName]
     
     await inventoryPage.addToCart(backpackName)
     await inventoryPage.addToCart(tshirtName)
@@ -63,7 +64,6 @@ test('user can complete checkout with correct totals', async({ inventoryPage, ca
     await expect(inventoryPage.headerComponent.cartBadge).toHaveText('2')
 
     await inventoryPage.headerComponent.cartButton.click()
-    const expectedSubtotal = PRODUCTS[backpackName] + PRODUCTS[tshirtName]
     await cartPage.checkout()
 
     await checkoutPage.fillInfo(data)
@@ -78,4 +78,8 @@ test('user can complete checkout with correct totals', async({ inventoryPage, ca
     await checkoutOverviewPage.finish()
 
     await expect(checkoutCompletePage.successMessage).toHaveText(MESSAGES.success_message)
+    
+    await checkoutCompletePage.backHome()
+    await inventoryPage.expectLoaded()
+    await expect(inventoryPage.headerComponent.cartBadge).toBeHidden()
 })
