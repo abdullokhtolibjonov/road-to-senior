@@ -810,15 +810,15 @@ Fixtures are **lazy**: a test that doesn't list `loggedIn` never logs in.
 
 Tick them off as you write them. Suggested file in brackets.
 
-**Status 2026-10-12:** 5 done, 5 partial, 18 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
+**Status 2026-10-12:** 10 done, 5 partial, 13 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
 
 **Login** `[login.spec.ts]`
 - [x] Successful login → redirected to inventory
-- [ ] Locked-out user → error message shown, still on login page
-- [ ] Invalid credentials → error message
-- [ ] Empty username → "Username is required"
-- [ ] Username but empty password → "Password is required"
-- [ ] (data-driven) the 4 negative cases above generated from one array — see §5.2
+- [x] Locked-out user → error message shown, still on login page
+- [x] Invalid credentials → error message
+- [x] Empty username → "Username is required"
+- [x] Username but empty password → "Password is required"
+- [x] (data-driven) the 4 negative cases above generated from one array — see §5.2
 - [ ] Opening `/inventory.html` while logged out → redirected to `/` with error
 - [ ] Logout via burger menu → back on login page; browser Back doesn't show inventory
 - [ ] `performance_glitch_user` logs in successfully (raise timeout with `test.slow()`)
