@@ -11,7 +11,7 @@ export class CheckoutCompletePage extends BasePage {
         super(page)
 
         this.successMessage = page.getByTestId('complete-header')
-        this.generatePdfbutton = page.getByTestId('generate-pdf-order')
+        this.generatePdfButton = page.getByTestId('generate-pdf-order')
         this.backHomeButton = page.getByTestId('back-to-products')
     }
 
