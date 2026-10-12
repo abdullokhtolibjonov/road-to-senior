@@ -5,3 +5,9 @@ export type CheckoutInfo = {
     lastName: string
     postalCode: string
 }
+
+export type CheckoutSummary = {
+    subtotal: number
+    tax: number
+    total: number
+}

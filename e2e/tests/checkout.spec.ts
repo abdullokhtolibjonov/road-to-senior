@@ -1,8 +1,7 @@
 import { test, expect } from '../fixtures/test'
-import { InventoryPage } from '../pages/InventoryPage';
 import type { CheckoutInfo } from '../utils/types/types';
 import { MESSAGES } from '../test-data/messages'
-import { CheckoutOverviewPage } from '../pages/CheckoutOverviewPage';
+import { PRODUCTS } from '../test-data/products'
 
 test.beforeEach(async ({ loginPage, inventoryPage }) => {
     await loginPage.goto()
@@ -10,7 +9,7 @@ test.beforeEach(async ({ loginPage, inventoryPage }) => {
     await inventoryPage.expectLoaded()
 })
 
-test('checkout first step form displays error messages', async ({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
+test('checkout step one shows required-field errors', async ({ inventoryPage, cartPage, checkoutPage }) => {
     const backpackName = 'Sauce Labs Backpack'
     const tshirtName = 'Sauce Labs Bolt T-Shirt'
     const dataWithoutFirstName: Partial<CheckoutInfo> = {
@@ -47,16 +46,36 @@ test('checkout first step form displays error messages', async ({ inventoryPage,
     await checkoutPage.fillInfo(dataWithoutPostalCode)
     await checkoutPage.continue()
     await expect(checkoutPage.errorMessage).toHaveText(MESSAGES.postal_code_required)
+})
 
-    await checkoutPage.postalCodeInput.fill('011700')
+test('user can complete checkout with correct totals', async({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
+    const backpackName = 'Sauce Labs Backpack'
+    const tshirtName = 'Sauce Labs Bolt T-Shirt'
+    const data: CheckoutInfo = {
+        firstName: 'Abdulloh',
+        lastName: 'Tolibjonov',
+        postalCode: '011700'
+    }
+    
+    await inventoryPage.addToCart(backpackName)
+    await inventoryPage.addToCart(tshirtName)
+
+    await expect(inventoryPage.headerComponent.cartBadge).toHaveText('2')
+
+    await inventoryPage.headerComponent.cartButton.click()
+    const expectedSubtotal = PRODUCTS[backpackName] + PRODUCTS[tshirtName]
+    await cartPage.checkout()
+
+    await checkoutPage.fillInfo(data)
     await checkoutPage.continue()
 
-    const calculatedSummaryPrice = await checkoutOverviewPage.getSummary()
-    const summaryLabel = await checkoutOverviewPage.getSummaryLabel()
+    const { subtotal, tax, total } = await checkoutOverviewPage.getSummary()
     
-    expect(calculatedSummaryPrice).toEqual(summaryLabel)
+    expect(subtotal).toBeCloseTo(expectedSubtotal, 2)
+    expect(total).toBeCloseTo(subtotal + tax, 2)
+    expect(await checkoutOverviewPage.getNames()).toEqual([backpackName, tshirtName])
 
     await checkoutOverviewPage.finish()
 
-    await expect(checkoutCompletePage.successMessage).toBeVisible()
+    await expect(checkoutCompletePage.successMessage).toHaveText(MESSAGES.success_message)
 })

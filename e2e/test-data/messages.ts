@@ -5,5 +5,6 @@ export const MESSAGES = {
     username_or_password_mismatch: 'Epic sadface: Username and password do not match any user in this service',
     first_name_required: 'Error: First Name is required',
     last_name_required: 'Error: Last Name is required',
-    postal_code_required: 'Error: Postal Code is required'
+    postal_code_required: 'Error: Postal Code is required',
+    success_message: 'Thank you for your order!'
 } as const

@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage'
 import { HeaderComponent } from './components/HeaderComponent'
 import { parsePrice } from '../utils/money'
+import type { CheckoutSummary } from '../utils/types/types'
 
 export class CheckoutOverviewPage extends BasePage {
     protected readonly path = '/checkout-step-two.html'
@@ -9,8 +10,10 @@ export class CheckoutOverviewPage extends BasePage {
     readonly finishButton: Locator
     readonly cancelButton: Locator
     readonly itemNames: Locator
-    readonly prices: Locator
-    readonly priceToalLabel: Locator
+    readonly itemPrices: Locator
+    readonly subtotalLabel: Locator
+    readonly taxLabel: Locator
+    readonly totalLabel: Locator
 
     constructor(page: Page) {
         super(page)
@@ -18,8 +21,10 @@ export class CheckoutOverviewPage extends BasePage {
         this.finishButton = page.getByTestId('finish')
         this.cancelButton = page.getByTestId('cancel')
         this.itemNames = page.getByTestId('inventory-item-name')
-        this.prices = page.getByTestId('inventory-item-price')
-        this.priceToalLabel = page.getByTestId('subtotal-label')
+        this.itemPrices = page.getByTestId('inventory-item-price')
+        this.subtotalLabel = page.getByTestId('subtotal-label')
+        this.taxLabel = page.getByTestId('tax-label')
+        this.totalLabel = page.getByTestId('total-label')
     }
 
     async getNames(): Promise<string[]> {
@@ -27,35 +32,19 @@ export class CheckoutOverviewPage extends BasePage {
     }
 
     async getPrices(): Promise<number[]> {
-        const textPrices = await this.prices.allTextContents()
+        const textPrices = await this.itemPrices.allTextContents()
 
         const numberPrices = textPrices.map(parsePrice);
 
         return numberPrices
     }
 
-    async getSummary() {
-        const prices: number[] = await this.getPrices()
-
-        const total = prices.reduce((acc, p) => acc + p, 0)
-
-        return total
-    }
-
-    async getSummaryLabel() {
-        const label = await this.priceToalLabel.textContent()
-
-        if (label === null) {
-            throw new Error('Summary label has no text content');
+    async getSummary(): Promise<CheckoutSummary> {
+        return {
+            subtotal: parsePrice(await this.subtotalLabel.textContent()),
+            tax: parsePrice(await this.taxLabel.textContent()),
+            total: parsePrice(await this.totalLabel.textContent())
         }
-
-        const match = label.match(/\d+(\.\d+)?/)
-
-        if (!match) {
-            throw new Error(`No number found in label: "${label}"`);
-        }
-
-        return parseFloat(match[0]);
     }
 
     async finish() {
