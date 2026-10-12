@@ -13,6 +13,7 @@ type MyFixtures = {
     checkoutOverviewPage: CheckoutOverviewPage,
     checkoutCompletePage: CheckoutCompletePage,
     inventoryPage: InventoryPage,
+    loggedIn: void
 }
 
 export const test = base.extend<MyFixtures>({
@@ -33,6 +34,12 @@ export const test = base.extend<MyFixtures>({
     },
     checkoutCompletePage: async ({ page }, use) => {
         await use(new CheckoutCompletePage(page))
+    },
+    loggedIn: async({ loginPage, inventoryPage }, use) => {
+        await loginPage.goto()
+        await loginPage.loginAs('standardUser')
+        await inventoryPage.expectLoaded()
+        await use()
     }
 })
 

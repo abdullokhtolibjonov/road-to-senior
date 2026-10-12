@@ -3,10 +3,8 @@ import type { CheckoutInfo } from '../utils/types/types';
 import { MESSAGES } from '../test-data/messages'
 import { PRODUCTS } from '../test-data/products'
 
-test.beforeEach(async ({ loginPage, inventoryPage }) => {
-    await loginPage.goto()
-    await loginPage.loginAs('standardUser')
-    await inventoryPage.expectLoaded()
+test.beforeEach(async ({ loggedIn }) => {
+
 })
 
 test('checkout step one shows required-field errors', async ({ inventoryPage, cartPage, checkoutPage }) => {
