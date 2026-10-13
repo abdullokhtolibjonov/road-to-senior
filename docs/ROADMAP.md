@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | Steps 1–3 done (scenario list, data-driven login, `storageState`). Next: step 4 network interception. See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | Steps 1–4 done (scenario list, data-driven login, `storageState`, network interception). Next: step 5 tags. See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -34,10 +34,10 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 3 — next session (updated 2026-10-13)
+### Phase 3 — next session (updated 2026-10-14)
 
-**State:** typecheck + lint clean, 12 chromium tests green (1 setup + 11), ~6.3s.
-Scenario list (`E2E-TESTING.md` §4): **10 done, 5 partial, 13 open**.
+**State:** typecheck + lint clean, 15 tests green (1 setup + 14 chromium), ~7.5s.
+Scenario list (`E2E-TESTING.md` §4): **12 done, 5 partial, 11 open**.
 
 **Done 2026-10-12 (Phase 3):** step 1 — scenario list reviewed against existing tests; step 2 —
 data-driven login errors in `login.spec.ts` (`LoginErrorCase` type + `errorCases` array + `for`
@@ -49,6 +49,11 @@ saves `playwright/.auth/standard.json`; `setup` project + `chromium` has `depend
 and `use.storageState`; `loggedIn` fixture now just `inventoryPage.goto()` + `expectLoaded()`;
 `login.spec.ts` starts logged out via `test.use({ storageState: { cookies: [], origins: [] } })`.
 
+**Done 2026-10-14 (Phase 3):** step 4 — `e2e/tests/network.spec.ts`: images blocked (`route.abort()`)
+→ 6 items + add to cart still work; images delayed 1500ms (`route.continue()`) → page still works;
+`**/inventory.html` faked as 500 (`route.fulfill`) → status 500, "Server error" visible, 0 items.
+Each image test counts matched requests (`blocked`/`delayed`) to prove the route actually fired.
+
 **Learned:** a floating promise (calling an `async` method without `await`) can pass tests by luck
 and hide failures — every async call needs `await`; data-driven tests need unique titles; spec files
 shouldn't `export` anything; assert the error first, then "still on login page" (otherwise the URL
@@ -58,14 +63,22 @@ check passes before the login request finishes).
 `testMatch` only picks `*.spec.ts`/`*.test.ts`, so `*.setup.ts` isn't run twice.
 Runtime went ~4.4s → ~6.3s: with only 6 logged-in tests the serial setup step costs more than it
 saves (SauceDemo login is instant and client-side); the win grows with suite size and slow logins.
+Network interception = create a problem on purpose (route) → use the app → assert what the *user*
+sees. Register `page.route` **before** the navigation; that's why `network.spec.ts` skips `loggedIn`.
+Each test's routes live only in its own page — other specs run on a normal network. Prove the fake
+ran (request counter / `response.status()`), but the real assertion is user-facing. `page.goto`
+doesn't throw on HTTP 500 (only on network errors); it returns `Response | null`.
+`expect` on a plain value needs no `await`; only locator assertions retry.
+"Locator not found" → first check you're on the page you think (failure screenshot).
 
 **Optional:** enable `@typescript-eslint/no-floating-promises` (needs type-aware linting in
 `eslint.config.mjs`) so a missing `await` becomes a lint error. Optional: import
 `STANDARD_AUTH_FILE` in `playwright.config.ts` instead of repeating the path string.
 
-**▶ Start here next session: step 4 — network interception (`page.route`).**
+**▶ Start here next session: step 5 — tags (`@smoke`).** Optional extra for step 4: the JSON API
+mocking exercise on `demo.playwright.dev/api-mocking` (`E2E-TESTING.md` §5.4).
 
-**Then (Phase 3 order):** step 4 network interception (`page.route`) → step 5 tags (`@smoke`) →
+**Then (Phase 3 order):** step 5 tags (`@smoke`) →
 step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
 Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after
 remove, data-driven checkout errors, order math in cents with tax rate.

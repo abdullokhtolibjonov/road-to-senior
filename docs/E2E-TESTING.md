@@ -810,7 +810,7 @@ Fixtures are **lazy**: a test that doesn't list `loggedIn` never logs in.
 
 Tick them off as you write them. Suggested file in brackets.
 
-**Status 2026-10-12:** 10 done, 5 partial, 13 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
+**Status 2026-10-14:** 12 done, 5 partial, 11 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
 
 **Login** `[login.spec.ts]`
 - [x] Successful login → redirected to inventory
@@ -846,8 +846,8 @@ Tick them off as you write them. Suggested file in brackets.
 - [ ] Cancel on step 1 returns to cart
 
 **Cross-cutting (Phase 3)** `[network.spec.ts]`
-- [ ] `page.route` blocking all images → inventory still usable (6 items, add to cart works)
-- [ ] `page.route` delaying resources → page still loads within your timeout
+- [x] `page.route` blocking all images → inventory still usable (6 items, add to cart works)
+- [x] `page.route` delaying resources → page still loads within your timeout
 - [ ] (optional) API mocking exercise on `https://demo.playwright.dev/api-mocking` (§5.4)
 - [ ] Smoke subset tagged `@smoke` runs on chromium **and** firefox
 
@@ -1055,10 +1055,11 @@ test('shows mocked fruit', async ({ page }) => {
   await expect(page.getByText('Mocked Mango')).toBeVisible()
 })
 
-test('saucedemo still works without images', { tag: '@smoke' }, async ({ page, loggedIn }) => {
+// storageState already logs us in, so no `loggedIn` — register the route, THEN navigate
+test('saucedemo still works without images', { tag: '@smoke' }, async ({ page, inventoryPage }) => {
   await page.route(/\.(png|jpe?g|svg)$/, (route) => route.abort())
-  await page.reload()
-  await expect(loggedIn.items).toHaveCount(6)
+  await inventoryPage.goto()
+  await expect(inventoryPage.itemNames).toHaveCount(6)
 })
 ```
 `page.route` must be registered **before** the navigation that triggers the request.
