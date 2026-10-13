@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | Steps 1–2 done (scenario list, data-driven login). Next: step 3 `storageState`. See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | Steps 1–3 done (scenario list, data-driven login, `storageState`). Next: step 4 network interception. See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -34,39 +34,36 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 3 — next session (updated 2026-10-12, end of day)
+### Phase 3 — next session (updated 2026-10-13)
 
-**State:** typecheck + lint clean, 11 chromium tests green (last code commit `ec74d64`).
+**State:** typecheck + lint clean, 12 chromium tests green (1 setup + 11), ~6.3s.
 Scenario list (`E2E-TESTING.md` §4): **10 done, 5 partial, 13 open**.
-Uncommitted: `e2e/tests/auth.setup.ts` exists but is **empty** (storageState task just started).
 
 **Done 2026-10-12 (Phase 3):** step 1 — scenario list reviewed against existing tests; step 2 —
 data-driven login errors in `login.spec.ts` (`LoginErrorCase` type + `errorCases` array + `for`
 loop inside `test.describe`, 4 cases using `USER_ROLES`/`PASSWORD`/`MESSAGES`);
 `LoginPage.login(username, password)` added and `loginAs(role)` now calls it; `PASSWORD` exported.
 
+**Done 2026-10-13 (Phase 3):** step 3 — `storageState`. `e2e/tests/auth.setup.ts` logs in once and
+saves `playwright/.auth/standard.json`; `setup` project + `chromium` has `dependencies: ['setup']`
+and `use.storageState`; `loggedIn` fixture now just `inventoryPage.goto()` + `expectLoaded()`;
+`login.spec.ts` starts logged out via `test.use({ storageState: { cookies: [], origins: [] } })`.
+
 **Learned:** a floating promise (calling an `async` method without `await`) can pass tests by luck
 and hide failures — every async call needs `await`; data-driven tests need unique titles; spec files
 shouldn't `export` anything; assert the error first, then "still on login page" (otherwise the URL
 check passes before the login request finishes).
+`storageState` is two halves — *saving* (setup project) does nothing unless the project also
+*loads* it (`use.storageState`); `dependencies` goes next to `use`, not inside it; the default
+`testMatch` only picks `*.spec.ts`/`*.test.ts`, so `*.setup.ts` isn't run twice.
+Runtime went ~4.4s → ~6.3s: with only 6 logged-in tests the serial setup step costs more than it
+saves (SauceDemo login is instant and client-side); the win grows with suite size and slow logins.
 
 **Optional:** enable `@typescript-eslint/no-floating-promises` (needs type-aware linting in
-`eslint.config.mjs`) so a missing `await` becomes a lint error.
+`eslint.config.mjs`) so a missing `await` becomes a lint error. Optional: import
+`STANDARD_AUTH_FILE` in `playwright.config.ts` instead of repeating the path string.
 
-**▶ Start here next session: step 3 — `storageState`** (Claude explained the task in detail on
-2026-10-12; summary):
-1. Note the current suite time (`npx playwright test --project=chromium`, was ~4.4s) for comparison
-2. `e2e/tests/auth.setup.ts`: `import { test as setup }` from fixtures; `goto` → `loginAs('standardUser')`
-   → `inventoryPage.expectLoaded()` → `page.context().storageState({ path: STANDARD_AUTH_FILE })`;
-   export `STANDARD_AUTH_FILE = 'playwright/.auth/standard.json'`
-3. `playwright.config.ts`: add `{ name: 'setup', testMatch: /.*\.setup\.ts/ }`; `chromium` gets
-   `dependencies: ['setup']` and `use.storageState: 'playwright/.auth/standard.json'`
-4. `loggedIn` fixture: drop the UI login → `inventoryPage.goto()` + `expectLoaded()` + `use()`
-   (remove `loginPage` from its params) — specs stay unchanged
-5. `login.spec.ts`: `test.use({ storageState: { cookies: [], origins: [] } })` so it starts logged out
-6. `.gitignore` already has `/playwright/.auth/` ✅
-7. Check: `[setup]` runs first, 11 tests + 1 setup green, `standard.json` contains `session-username`;
-   compare runtime
+**▶ Start here next session: step 4 — network interception (`page.route`).**
 
 **Then (Phase 3 order):** step 4 network interception (`page.route`) → step 5 tags (`@smoke`) →
 step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
@@ -174,14 +171,14 @@ Step-by-step (details in `E2E-TESTING.md` → "Phase 3 walkthrough"):
 
    > **Task (recorded 2026-10-09):** replace the per-test UI login (`beforeEach` / `loggedIn`
    > fixture from Phase 2) with `storageState`.
-   > - [ ] `e2e/auth.setup.ts`: log in with `LoginPage.loginAs('standardUser')`, wait for
+   > - [x] `e2e/tests/auth.setup.ts`: log in with `LoginPage.loginAs('standardUser')`, wait for
    >   `/inventory.html`, then `await page.context().storageState({ path: 'playwright/.auth/standard.json' })`
-   > - [ ] `playwright.config.ts`: add a `setup` project (`testMatch: /.*\.setup\.ts/`); E2E projects
+   > - [x] `playwright.config.ts`: add a `setup` project (`testMatch: /.*\.setup\.ts/`); E2E projects
    >   get `dependencies: ['setup']` and `use: { storageState: 'playwright/.auth/standard.json' }`
-   > - [ ] Add `playwright/.auth/` to `.gitignore` (it holds a session cookie)
-   > - [ ] `login.spec.ts` must start logged out: `test.use({ storageState: { cookies: [], origins: [] } })`
+   > - [x] Add `playwright/.auth/` to `.gitignore` (it holds a session cookie)
+   > - [x] `login.spec.ts` must start logged out: `test.use({ storageState: { cookies: [], origins: [] } })`
    > - [ ] Other roles (`problemUser`, …): one state file per role, or keep UI login for those specs
-   > - [ ] Remove the now-redundant login from `beforeEach` / `loggedIn`; tests start with
+   > - [x] Remove the now-redundant login from `beforeEach` / `loggedIn`; tests start with
    >   `inventoryPage.goto()`
    > - [ ] Compare suite runtime before/after
 4. **Network interception** with `page.route` (block images, delay resources, fake a 500).

@@ -2,6 +2,8 @@ import { test, expect } from '../fixtures/test'
 import { MESSAGES } from '../test-data/messages';
 import { PASSWORD, USER_ROLES } from '../test-data/users';
 
+test.use({ storageState: { cookies: [], origins: [] }})
+
 type LoginErrorCase = {
     title: string
     username: string

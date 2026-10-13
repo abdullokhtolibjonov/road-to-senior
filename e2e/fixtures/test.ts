@@ -35,9 +35,8 @@ export const test = base.extend<MyFixtures>({
     checkoutCompletePage: async ({ page }, use) => {
         await use(new CheckoutCompletePage(page))
     },
-    loggedIn: async({ loginPage, inventoryPage }, use) => {
-        await loginPage.goto()
-        await loginPage.loginAs('standardUser')
+    loggedIn: async({ inventoryPage }, use) => {
+        await inventoryPage.goto()
         await inventoryPage.expectLoaded()
         await use()
     }
