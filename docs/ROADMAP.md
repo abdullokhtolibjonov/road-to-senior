@@ -18,14 +18,14 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-12, end of day)
+## Current Status (as of 2026-10-14, end of day)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types, data-driven checkout errors, order math in cents) + open questions See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types, data-driven checkout errors, order math in cents). See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -34,7 +34,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 Update this table as you go — it's your progress log.
 
-### Phase 3 — next session (updated 2026-10-14)
+### Phase 3 — next session (updated 2026-10-14, end of day)
 
 **State:** typecheck + lint clean, 15 tests green (1 setup + 14 chromium), ~7.5s; smoke 4, regression 12.
 Scenario list (`E2E-TESTING.md` §4): **12 done, 5 partial, 11 open**.
@@ -117,14 +117,17 @@ why typecheck is a separate step (and a CI gate in Phase 7). Retries 0 locally =
 2 in CI = tolerate blips but the report still marks them "flaky". Note: `trace`/`video` are
 `'on-first-retry'`, so with 0 local retries nothing is recorded locally — use `--trace on` to debug.
 
-**Open questions to answer (steps 6–7):**
-1. Why did runtime go 7.5s → 34s instead of ~15s (Firefox startup per worker vs per test)?
-2. Should smoke run on every browser or just one?
-3. Failed vs flaky in the report?
-4. Why is `retries` alone a bad fix for a flaky test?
-5. Why is `waitForTimeout(2000)` worse than `await expect(...).toBeVisible()`?
+**Questions answered 2026-10-14 (steps 6–7):** runtime grows by more than 2× per added browser —
+Firefox is slower per test (~2× on cart/checkout) and work ÷ fixed workers; first runs are cold
+(measured 28–34s cold vs ~15s warm Firefox) → measure 2–3 times. Smoke on **one** browser
+(fast answer; engine-specific bugs belong to regression). Failed = every attempt failed; flaky =
+failed then passed on retry in the same run. Retries don't fix the race — they hide real app bugs,
+slow the suite and let flakiness grow unnoticed. `waitForTimeout` is wrong both ways (wastes time
+when the app is fast, still fails when it's slower); web-first assertions poll and continue as soon
+as ready. Optional: `test:smoke` → add `--project=chromium`.
 
-**▶ Start here next session: close Phase 3 deliverable gaps**, then Phase 4 (API):
+**▶ Start here next session: close Phase 3 deliverable gaps** (steps + exit criterion done, phase ~90%;
+last commit `d5600e1`; Claude hasn't explained task 1 yet), then Phase 4 (API):
 - login for the other user types (`problem_user`, `performance_glitch_user`, `error_user`,
   `visual_user`) — UI login or one state file per role (storageState task's open checkbox)
 - data-driven checkout step-one errors (same pattern as login errors)
