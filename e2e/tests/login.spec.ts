@@ -38,7 +38,7 @@ const errorCases: LoginErrorCase[] = [
     }
 ]
 
-test.describe('Login errors', () => {
+test.describe('Login errors', { tag: ['@login']}, () => {
     for (const c of errorCases) {
         test(`shows an error for ${c.title}`, async ({ loginPage }) => {
             await loginPage.goto()
@@ -50,7 +50,7 @@ test.describe('Login errors', () => {
     }
 })
 
-test('standard user logs in and lands on inventory', async ({ loginPage, inventoryPage }) => {
+test('standard user logs in and lands on inventory', {tag: ['@login', '@smoke']}, async ({ loginPage, inventoryPage }) => {
     await loginPage.goto()
     await loginPage.loginAs('standardUser')
     await inventoryPage.expectLoaded()

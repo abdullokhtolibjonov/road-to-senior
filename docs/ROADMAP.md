@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | Steps 1–4 done (scenario list, data-driven login, `storageState`, network interception). Next: step 5 tags. See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | Steps 1–5 done (scenario list, data-driven login, `storageState`, network interception, tags). Next: step 6 Firefox. See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -36,7 +36,7 @@ Update this table as you go — it's your progress log.
 
 ### Phase 3 — next session (updated 2026-10-14)
 
-**State:** typecheck + lint clean, 15 tests green (1 setup + 14 chromium), ~7.5s.
+**State:** typecheck + lint clean, 15 tests green (1 setup + 14 chromium), ~7.5s; smoke 4, regression 12.
 Scenario list (`E2E-TESTING.md` §4): **12 done, 5 partial, 11 open**.
 
 **Done 2026-10-12 (Phase 3):** step 1 — scenario list reviewed against existing tests; step 2 —
@@ -75,11 +75,30 @@ doesn't throw on HTTP 500 (only on network errors); it returns `Response | null`
 `eslint.config.mjs`) so a missing `await` becomes a lint error. Optional: import
 `STANDARD_AUTH_FILE` in `playwright.config.ts` instead of repeating the path string.
 
-**▶ Start here next session: step 5 — tags (`@smoke`).** Optional extra for step 4: the JSON API
+**Done 2026-10-14 (Phase 3):** step 5 — tags. `@smoke` on 3 tests: standard login → inventory,
+add 2 / remove 1 in cart, complete checkout with totals (the "buy something" path: if any of these
+breaks, a user is completely blocked). Area tags `@login`, `@cart`, `@inventory`, `@checkout`.
+`network.spec.ts` wrapped in `test.describe('network interception tests', { tag: '@network' }, ...)`.
+Scripts: `test:smoke` (`--grep @smoke` → 4 incl. setup, ~4.4s) and `test:regression`
+(`--grep-invert @network` → 12 incl. setup, ~6.4s).
+
+**Learned (step 5):** smoke = "is a user completely blocked?" — the login *happy path* is smoke,
+the error messages are not (a wrong message doesn't block anyone, so "locked out user" is not smoke).
+A `describe` callback must be **synchronous** — it only registers tests; an `await` inside would
+silently drop the tests after it. `--grep` is a regex over title + tags; `--grep X --grep-invert Y`
+means "matches X **and** not Y", so a tag nobody has (`@regression`) selects 0 tests.
+CLI shape is `npx playwright <command> <options>` — `--grep` belongs to `test`, so
+`npx playwright --grep-invert ...` fails with `unknown option`.
+Open question to answer: what's the risk if smoke grows to 10/14 tests?
+
+**▶ Start here next session: step 6 — Firefox** (add a `firefox` project with
+`dependencies: ['setup']` + the same `storageState`; optional webkit / mobile web projects), then
+step 7 retries + `--repeat-each=5`, plus the open/partial scenarios (other user types, checkout
+errors data-driven, order math in cents). Exit criterion:
+`npx playwright test --project=chromium --project=firefox --repeat-each=5` fully green. Optional extra for step 4: the JSON API
 mocking exercise on `demo.playwright.dev/api-mocking` (`E2E-TESTING.md` §5.4).
 
-**Then (Phase 3 order):** step 5 tags (`@smoke`) →
-step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
+**Then (Phase 3 order):** step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
 Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after
 remove, data-driven checkout errors, order math in cents with tax rate.
 

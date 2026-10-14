@@ -5,7 +5,7 @@ import { PRODUCTS } from '../test-data/products'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
-test('checkout step one shows required-field errors', async ({ inventoryPage, cartPage, checkoutPage }) => {
+test('checkout step one shows required-field errors', { tag: ['@checkout']}, async ({ inventoryPage, cartPage, checkoutPage }) => {
     const backpackName = 'Sauce Labs Backpack'
     const tshirtName = 'Sauce Labs Bolt T-Shirt'
     const dataWithoutFirstName: Partial<CheckoutInfo> = {
@@ -44,7 +44,7 @@ test('checkout step one shows required-field errors', async ({ inventoryPage, ca
     await expect(checkoutPage.errorMessage).toHaveText(MESSAGES.postal_code_required)
 })
 
-test('user can complete checkout with correct totals', async({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
+test('user can complete checkout with correct totals', { tag: ['@smoke']}, async({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
     const backpackName = 'Sauce Labs Backpack'
     const tshirtName = 'Sauce Labs Bolt T-Shirt'
     const data: CheckoutInfo = {

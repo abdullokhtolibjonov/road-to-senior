@@ -2,7 +2,7 @@ import { expect, test } from '../fixtures/test'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
-test('Add a product to cart and remove it, verify badge count', async ({ inventoryPage }) => {
+test('Add a product to cart and remove it, verify badge count', { tag: ['@inventory']}, async ({ inventoryPage }) => {
     await inventoryPage.addToCart('Sauce Labs Backpack')
     await expect(inventoryPage.headerComponent.cartBadge).toHaveText('1')
 
@@ -10,7 +10,7 @@ test('Add a product to cart and remove it, verify badge count', async ({ invento
     await expect(inventoryPage.headerComponent.cartBadge).toBeHidden()
 })
 
-test('inventory items price low to high and high to low', async ({ inventoryPage }) => {
+test('inventory items price low to high and high to low', { tag: ['@inventory']}, async ({ inventoryPage }) => {
     await inventoryPage.sortBy('lohi')
 
     await expect(inventoryPage.prices.first()).toHaveText('$7.99')
@@ -27,7 +27,7 @@ test('inventory items price low to high and high to low', async ({ inventoryPage
     expect(prices2).toEqual(reverseSortedPrices)
 })
 
-test('inventory items name A to Z and Z to A', async ({ inventoryPage }) => {
+test('inventory items name A to Z and Z to A', { tag: ['@inventory']}, async ({ inventoryPage }) => {
     await inventoryPage.sortBy('za')
     await expect(inventoryPage.itemNames.first()).toHaveText('Test.allTheThings() T-Shirt (Red)')
     const names2 = await inventoryPage.getNames()
