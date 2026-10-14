@@ -27,6 +27,13 @@ export default defineConfig({
     },
     dependencies: ['setup']
   }, {
+    name: 'firefox',
+    use: {
+      ...devices['Desktop Firefox'],
+      storageState: 'playwright/.auth/standard.json'
+    },
+    dependencies: ['setup']
+  }, {
     name: 'setup',
     testMatch: /.*\.setup\.ts/,
   }]

@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | Steps 1–5 done (scenario list, data-driven login, `storageState`, network interception, tags). Next: step 6 Firefox. See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | Steps 1–6 done (scenario list, data-driven login, `storageState`, network interception, tags, Firefox). Next: step 7 retries + `--repeat-each`. See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -91,14 +91,29 @@ CLI shape is `npx playwright <command> <options>` — `--grep` belongs to `test`
 `npx playwright --grep-invert ...` fails with `unknown option`.
 Open question to answer: what's the risk if smoke grows to 10/14 tests?
 
-**▶ Start here next session: step 6 — Firefox** (add a `firefox` project with
-`dependencies: ['setup']` + the same `storageState`; optional webkit / mobile web projects), then
-step 7 retries + `--repeat-each=5`, plus the open/partial scenarios (other user types, checkout
-errors data-driven, order math in cents). Exit criterion:
-`npx playwright test --project=chromium --project=firefox --repeat-each=5` fully green. Optional extra for step 4: the JSON API
-mocking exercise on `demo.playwright.dev/api-mocking` (`E2E-TESTING.md` §5.4).
+**Done 2026-10-14 (Phase 3):** step 6 — Firefox. `firefox` project (`devices['Desktop Firefox']`,
+same `storageState`, `dependencies: ['setup']`). Full suite: 29 tests (1 setup + 14 + 14), all green,
+~34s (was ~7.5s chromium-only); Firefox alone ~28s. No Firefox-specific failures.
+Smoke question answered: smoke must stay small — at 10/14 it's as slow as the full suite and a red
+smoke run no longer means "users are blocked", so people start ignoring it.
 
-**Then (Phase 3 order):** step 6 Firefox (+ optional mobile web projects) → step 7 retries + `--repeat-each=5`.
+**Learned (step 6):** a project is a named set of settings; every test runs once per project.
+**Every** project that loads `storageState` needs its own `dependencies: ['setup']` — without it,
+`npx playwright test` passes by luck (chromium triggers setup) but `--project=firefox` on a fresh
+clone / CI fails with `Error reading storage state`. Verified by removing the state file.
+
+**Open questions (step 6):** why did runtime go 7.5s → 34s instead of ~15s (hint: Firefox startup per
+worker vs. per test)? Should smoke run on every browser or just one?
+Optional extras not done: `webkit` project, a mobile web project (`devices['Pixel 7']`).
+
+**▶ Start here next session: step 7 — retries + `--repeat-each=5`**: set
+`retries: process.env.CI ? 2 : 0`, run `npx playwright test --project=chromium --project=firefox
+--repeat-each=5`, fix root causes of any flaky test (never `waitForTimeout`) and explain the race.
+Then the open/partial scenarios (other user types, checkout errors data-driven, order math in cents).
+Optional extra for step 4: the JSON API mocking exercise on `demo.playwright.dev/api-mocking`
+(`E2E-TESTING.md` §5.4).
+
+**Then (Phase 3 order):** step 7 retries + `--repeat-each=5`.
 Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after
 remove, data-driven checkout errors, order math in cents with tax rate.
 
