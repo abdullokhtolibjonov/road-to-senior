@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { MESSAGES } from '../test-data/messages';
-import { PASSWORD, USER_ROLES } from '../test-data/users';
+import { PASSWORD, USER_ROLES, LOGIN_ROLES } from '../test-data/users';
 
 test.use({ storageState: { cookies: [], origins: [] }})
 
@@ -50,8 +50,12 @@ test.describe('Login errors', { tag: ['@login']}, () => {
     }
 })
 
-test('standard user logs in and lands on inventory', {tag: ['@login', '@smoke']}, async ({ loginPage, inventoryPage }) => {
-    await loginPage.goto()
-    await loginPage.loginAs('standardUser')
-    await inventoryPage.expectLoaded()
+test.describe('available users log in and land on inventory', () => {
+    for (const role of LOGIN_ROLES) {
+        test(`${role} can login and land on inventory page`, { tag: role === 'standardUser'? ['@smoke', '@login']: ['@login']}, async({ loginPage, inventoryPage }) => {
+            await loginPage.goto()
+            await loginPage.loginAs(role)
+            await inventoryPage.expectLoaded()
+        })
+    }
 })

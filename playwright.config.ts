@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { authFile } from './e2e/test-data/users';
 
 export default defineConfig({
   testDir: 'e2e/tests',
@@ -22,14 +23,14 @@ export default defineConfig({
     name: 'chromium',
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'playwright/.auth/standard.json'
+      storageState: authFile('standardUser')
     },
     dependencies: ['setup']
   }, {
     name: 'firefox',
     use: {
       ...devices['Desktop Firefox'],
-      storageState: 'playwright/.auth/standard.json'
+      storageState: authFile('standardUser')
     },
     dependencies: ['setup']
   }, {

@@ -1,10 +1,11 @@
 import { test as setup } from '../fixtures/test'
+import { LOGIN_ROLES, authFile } from '../test-data/users'
 
-export const STANDARD_AUTH_FILE = 'playwright/.auth/standard.json'
-
-setup('authenticate as a standard user', async({ page, loginPage, inventoryPage }) => {
-    await loginPage.goto()
-    await loginPage.loginAs('standardUser')
-    await inventoryPage.expectLoaded()
-    await page.context().storageState({ path: STANDARD_AUTH_FILE })
-})
+for (const role of LOGIN_ROLES) {
+    setup(`authenticate as ${role}`, async({ page, loginPage, inventoryPage }) => {
+        await loginPage.goto()
+        await loginPage.loginAs(role)
+        await inventoryPage.expectLoaded()
+        await page.context().storageState({ path: authFile(role) })
+    })
+}
