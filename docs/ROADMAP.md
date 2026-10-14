@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | Steps 1–6 done (scenario list, data-driven login, `storageState`, network interception, tags, Firefox). Next: step 7 retries + `--repeat-each`. See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types, data-driven checkout errors, order math in cents) + open questions See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -106,12 +106,32 @@ clone / CI fails with `Error reading storage state`. Verified by removing the st
 worker vs. per test)? Should smoke run on every browser or just one?
 Optional extras not done: `webkit` project, a mobile web project (`devices['Pixel 7']`).
 
-**▶ Start here next session: step 7 — retries + `--repeat-each=5`**: set
-`retries: process.env.CI ? 2 : 0`, run `npx playwright test --project=chromium --project=firefox
---repeat-each=5`, fix root causes of any flaky test (never `waitForTimeout`) and explain the race.
-Then the open/partial scenarios (other user types, checkout errors data-driven, order math in cents).
-Optional extra for step 4: the JSON API mocking exercise on `demo.playwright.dev/api-mocking`
-(`E2E-TESTING.md` §5.4).
+**Done 2026-10-14 (Phase 3):** step 7 — `retries: process.env.CI ? 2 : 0` in `playwright.config.ts`;
+`npx playwright test --project=chromium --project=firefox --repeat-each=5` fully green (no flaky
+tests found). `tsconfig.json` changed `"types": []` → `"types": ["node"]` so `process` type-checks.
+
+**Learned (step 7):** `"types": []` (the `tsc --init` default) loads **no** global `@types/*`
+packages even if installed; `"types": ["node"]` loads Node's (`process`, `Buffer`, …). Playwright
+strips types and never type-checks — tests can be green while `npm run typecheck` fails, which is
+why typecheck is a separate step (and a CI gate in Phase 7). Retries 0 locally = see every failure;
+2 in CI = tolerate blips but the report still marks them "flaky". Note: `trace`/`video` are
+`'on-first-retry'`, so with 0 local retries nothing is recorded locally — use `--trace on` to debug.
+
+**Open questions to answer (steps 6–7):**
+1. Why did runtime go 7.5s → 34s instead of ~15s (Firefox startup per worker vs per test)?
+2. Should smoke run on every browser or just one?
+3. Failed vs flaky in the report?
+4. Why is `retries` alone a bad fix for a flaky test?
+5. Why is `waitForTimeout(2000)` worse than `await expect(...).toBeVisible()`?
+
+**▶ Start here next session: close Phase 3 deliverable gaps**, then Phase 4 (API):
+- login for the other user types (`problem_user`, `performance_glitch_user`, `error_user`,
+  `visual_user`) — UI login or one state file per role (storageState task's open checkbox)
+- data-driven checkout step-one errors (same pattern as login errors)
+- order math in cents with tax rate (subtotal + tax = total, no float errors)
+- partial: add-to-cart button text, cart prices + badge after remove
+Optional: `webkit` / mobile web project; JSON API mocking on `demo.playwright.dev/api-mocking`
+(`E2E-TESTING.md` §5.4); `@typescript-eslint/no-floating-promises`.
 
 **Then (Phase 3 order):** step 7 retries + `--repeat-each=5`.
 Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after

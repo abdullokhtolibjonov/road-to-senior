@@ -8,8 +8,7 @@ export default defineConfig({
   },
   fullyParallel: true,
   reporter: 'html',
-  
-
+  retries: process.env.CI ? 2: 0,
   use: {
     baseURL: 'https://www.saucedemo.com',
     trace: 'on-first-retry',
