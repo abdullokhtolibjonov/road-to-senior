@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types, data-driven checkout errors, order math in cents). See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types — parts A+B done, C next; data-driven checkout errors; order math in cents). See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -36,7 +36,7 @@ Update this table as you go — it's your progress log.
 
 ### Phase 3 — next session (updated 2026-10-14, end of day)
 
-**State:** typecheck + lint clean, 15 tests green (1 setup + 14 chromium), ~7.5s; smoke 4, regression 12.
+**State (2026-10-14, end of day):** typecheck clean, 41 tests green (5 setup + 18 chromium + 18 firefox).
 Scenario list (`E2E-TESTING.md` §4): **12 done, 5 partial, 11 open**.
 
 **Done 2026-10-12 (Phase 3):** step 1 — scenario list reviewed against existing tests; step 2 —
@@ -126,19 +126,41 @@ slow the suite and let flakiness grow unnoticed. `waitForTimeout` is wrong both 
 when the app is fast, still fails when it's slower); web-first assertions poll and continue as soon
 as ready. Optional: `test:smoke` → add `--project=chromium`.
 
-**▶ Start here next session: close Phase 3 deliverable gaps** (steps + exit criterion done, phase ~90%;
-last commit `d5600e1`; Claude hasn't explained task 1 yet), then Phase 4 (API):
-- login for the other user types (`problem_user`, `performance_glitch_user`, `error_user`,
-  `visual_user`) — UI login or one state file per role (storageState task's open checkbox)
+**Done 2026-10-14 (Phase 3, evening):** Task 1 parts A + B — other user types.
+`users.ts`: `loginRole = Exclude<Role, 'lockedUser'>`, shared `LOGIN_ROLES` (5 roles),
+`authFile(role)` → `playwright/.auth/<role>.json`. `auth.setup.ts`: top-level `for` over
+`LOGIN_ROLES` → 5 setup tests, one state file per role (verified: each file's session cookie holds
+its own username). Config uses `authFile('standardUser')` for both projects. `login.spec.ts`:
+data-driven "logs in and lands on inventory" over `LOGIN_ROLES`; every test `@login`, only
+`standardUser` also `@smoke`. Full suite: 41 tests green on chromium + firefox, `tsc` clean.
+**Code not committed yet** (`users.ts`, `auth.setup.ts`, `login.spec.ts`, `playwright.config.ts`).
+
+**Learned (Task 1):** `setup()`/`test()` must be called at the file's top level (a loop is fine) —
+inside a function nobody calls, 0 tests get registered. Inside a loop, use the loop variable, not
+a hard-coded value (`loginAs(role)`, not `loginAs('standardUser')`). "Green + files exist" isn't
+proof — check the data (stale `.auth` files hid a broken setup; delete them before verifying).
+A `tag` ternary must pick between two **arrays** (`['@smoke','@login']` vs `['@login']`), or the
+smoke test loses `@login`. Timeouts: `expect(...)` uses `expect.timeout` (5s); `waitForURL`/`goto`
+use the navigation timeout (= test timeout) — so `performance_glitch_user` passes via `expectLoaded`.
+`lockedUser` gets no setup: it can't log in, and a failed setup blocks every project.
+
+**▶ Start here next session: Task 1 part C**, then the remaining gaps below, then Phase 4 (API).
+
+  > **Task 1 (recorded 2026-10-14):** other user types.
+  > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
+  > - [x] B — `authFile(role)`; setup writes one `playwright/.auth/<role>.json` per role
+  > - [ ] Cleanups (non-blocking): rename `loginRole` → `LoginRole` and use it in `authFile`'s
+  >   parameter; merge the two imports in `auth.setup.ts`; setup title `authenticate as ${role}`
+  > - [ ] C: new `e2e/tests/problem-user.spec.ts` with `test.use({ storageState: authFile('problemUser') })`;
+  >   add an `images` locator to `InventoryPage`; collect each `src`; assert no duplicates
+  >   (`new Set(srcs).size` vs length) → mark `test.fail()` with a comment why. Try it once as
+  >   `standardUser` to see it pass there
+  > - [ ] Run chromium + firefox, then commit
 - data-driven checkout step-one errors (same pattern as login errors)
 - order math in cents with tax rate (subtotal + tax = total, no float errors)
 - partial: add-to-cart button text, cart prices + badge after remove
 Optional: `webkit` / mobile web project; JSON API mocking on `demo.playwright.dev/api-mocking`
 (`E2E-TESTING.md` §5.4); `@typescript-eslint/no-floating-promises`.
-
-**Then (Phase 3 order):** step 7 retries + `--repeat-each=5`.
-Partial scenarios to finish along the way: add-to-cart button text, cart prices + badge after
-remove, data-driven checkout errors, order math in cents with tax rate.
 
 ---
 
@@ -247,7 +269,7 @@ Step-by-step (details in `E2E-TESTING.md` → "Phase 3 walkthrough"):
    >   get `dependencies: ['setup']` and `use: { storageState: 'playwright/.auth/standard.json' }`
    > - [x] Add `playwright/.auth/` to `.gitignore` (it holds a session cookie)
    > - [x] `login.spec.ts` must start logged out: `test.use({ storageState: { cookies: [], origins: [] } })`
-   > - [ ] Other roles (`problemUser`, …): one state file per role, or keep UI login for those specs
+   > - [x] Other roles (`problemUser`, …): one state file per role (`authFile(role)`, Task 1 part B)
    > - [x] Remove the now-redundant login from `beforeEach` / `loggedIn`; tests start with
    >   `inventoryPage.goto()`
    > - [ ] Compare suite runtime before/after
