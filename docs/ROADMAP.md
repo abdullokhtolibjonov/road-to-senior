@@ -18,14 +18,14 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-14, end of day)
+## Current Status (as of 2026-10-16)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types — parts A+B done, C next; data-driven checkout errors; order math in cents). See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types ✅; data-driven checkout errors ✅; order math in cents (next)). See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -133,7 +133,7 @@ as ready. Optional: `test:smoke` → add `--project=chromium`.
 its own username). Config uses `authFile('standardUser')` for both projects. `login.spec.ts`:
 data-driven "logs in and lands on inventory" over `LOGIN_ROLES`; every test `@login`, only
 `standardUser` also `@smoke`. Full suite: 41 tests green on chromium + firefox, `tsc` clean.
-**Code not committed yet** (`users.ts`, `auth.setup.ts`, `login.spec.ts`, `playwright.config.ts`).
+Committed 2026-10-14 (`8d4ebb5`), cleanups included.
 
 **Learned (Task 1):** `setup()`/`test()` must be called at the file's top level (a loop is fine) —
 inside a function nobody calls, 0 tests get registered. Inside a loop, use the loop variable, not
@@ -144,19 +144,52 @@ smoke test loses `@login`. Timeouts: `expect(...)` uses `expect.timeout` (5s); `
 use the navigation timeout (= test timeout) — so `performance_glitch_user` passes via `expectLoaded`.
 `lockedUser` gets no setup: it can't log in, and a failed setup blocks every project.
 
-**▶ Start here next session: Task 1 part C**, then the remaining gaps below, then Phase 4 (API).
+**Done 2026-10-16 (Phase 3):** Task 1 part C — `problem-user.spec.ts` (state from
+`authFile('problemUser')`): `InventoryPage.images` = `getByTestId('inventory-item').getByRole('img')`
+(6 product images, skips the burger icon); `srcs` via `.all()` + `Promise.all(map(getAttribute('src')))`;
+`expect(new Set(srcs).size).toBe(srcs.length)` under `test.fail()`. Sanity run as `standardUser`
+without `test.fail()` passes. Full suite 43 green, `tsc` clean.
+
+**Learned (part C):** `.locator()` after a locator searches *inside* it (`getByRole('img').locator(...)`
+→ 0 matches); `getAttribute` needs exactly one element (many → `.all()` + `Promise.all`).
+`test.fail()` turns *any* failure green — `getAttribute('img')` returned 6× `null` → Set size 1 →
+"bug detected" while the test read nothing. Always run the inverse check (known-good data, no
+`test.fail()`). `fail` = runs, must fail, flips red when the bug is fixed; `skip` = doesn't apply
+here (browser/env/condition) — an unnecessary test gets deleted, not skipped; `fixme` = test itself
+needs work, not run. Assert the rule (`srcs.length`), not today's data (`6`).
+
+**Done 2026-10-16 (Phase 3):** Task 2 — `checkout.spec.ts` step-one errors are data-driven:
+`CheckoutErrorCase` (`title`, `info: Partial<CheckoutInfo>`, `error`) + 3 cases + `for` loop in
+`test.describe('Checkout step one errors', { tag: ['@checkout'] })`. Each test does
+`checkoutPage.goto()` → `fillInfo` → `continue` → assert error → `expectLoaded()`; no cart setup, no
+`.clear()`. `problem-user.spec.ts` got its "why" comment above `test.fail()`. Full suite 47 green, `tsc` + lint clean.
+
+**Learned (Task 2):** one test = one reason to fail. The old sequential test stopped at the first
+broken case (hid the other two) and depended on leftover form state (`.clear()`). Only set up what
+the behaviour under test needs — form validation doesn't read the cart, so skip inventory/cart steps
+(faster, fewer unrelated failure points). Workflow from 2026-10-16: Claude implements, user reviews.
+
+**▶ Start here next session: Task 3** (order math in cents), then Phase 4 (API).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
   > - [x] B — `authFile(role)`; setup writes one `playwright/.auth/<role>.json` per role
-  > - [ ] Cleanups (non-blocking): rename `loginRole` → `LoginRole` and use it in `authFile`'s
+  > - [x] Cleanups (non-blocking): rename `loginRole` → `LoginRole` and use it in `authFile`'s
   >   parameter; merge the two imports in `auth.setup.ts`; setup title `authenticate as ${role}`
-  > - [ ] C: new `e2e/tests/problem-user.spec.ts` with `test.use({ storageState: authFile('problemUser') })`;
+  > - [x] C: new `e2e/tests/problem-user.spec.ts` with `test.use({ storageState: authFile('problemUser') })`;
   >   add an `images` locator to `InventoryPage`; collect each `src`; assert no duplicates
   >   (`new Set(srcs).size` vs length) → mark `test.fail()` with a comment why. Try it once as
   >   `standardUser` to see it pass there
-  > - [ ] Run chromium + firefox, then commit
-- data-driven checkout step-one errors (same pattern as login errors)
+  > - [x] Run chromium + firefox (43 green) — commit pending, plus a "why" comment above `test.fail()`
+
+  > **Task 2 (recorded 2026-10-16):** data-driven checkout step-one errors.
+  > - [x] `checkout.spec.ts`: replace the one sequential test (fill → clear → fill…) with a
+  >   `CheckoutErrorCase` type (`title`, `info: Partial<CheckoutInfo>`, `error`) + array of 3 cases
+  >   + `for` loop inside `test.describe` → 3 independent tests with unique titles
+  > - [x] Each test starts on a fresh step-one page; decide whether items in the cart are needed
+  >   to test form validation (hint: `checkoutPage.goto()`)
+  > - [x] Assert the error, then that you're still on step one; no `.clear()` calls needed
+  > - [x] Run chromium + firefox (47 green) — commit pending user review
 - order math in cents with tax rate (subtotal + tax = total, no float errors)
 - partial: add-to-cart button text, cart prices + badge after remove
 Optional: `webkit` / mobile web project; JSON API mocking on `demo.playwright.dev/api-mocking`

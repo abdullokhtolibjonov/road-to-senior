@@ -5,43 +5,42 @@ import { PRODUCTS } from '../test-data/products'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
-test('checkout step one shows required-field errors', { tag: ['@checkout']}, async ({ inventoryPage, cartPage, checkoutPage }) => {
-    const backpackName = 'Sauce Labs Backpack'
-    const tshirtName = 'Sauce Labs Bolt T-Shirt'
-    const dataWithoutFirstName: Partial<CheckoutInfo> = {
-        lastName: 'Tolibjonov',
-        postalCode: '011700'
+type CheckoutErrorCase = {
+    title: string
+    info: Partial<CheckoutInfo>
+    error: string
+}
+
+const errorCases: CheckoutErrorCase[] = [
+    {
+        title: 'missing first name',
+        info: { lastName: 'Tolibjonov', postalCode: '011700' },
+        error: MESSAGES.first_name_required
+    },
+    {
+        title: 'missing last name',
+        info: { firstName: 'Abdulloh', postalCode: '011700' },
+        error: MESSAGES.last_name_required
+    },
+    {
+        title: 'missing postal code',
+        info: { firstName: 'Abdulloh', lastName: 'Tolibjonov' },
+        error: MESSAGES.postal_code_required
     }
-    const dataWithoutLastName: Partial<CheckoutInfo> = {
-        firstName: 'Abdulloh',
-        postalCode: '011700'
+]
+
+test.describe('Checkout step one errors', { tag: ['@checkout'] }, () => {
+    for (const c of errorCases) {
+        test(`shows an error for ${c.title}`, async ({ checkoutPage }) => {
+            // Form validation doesn't depend on the cart, so open step one directly.
+            await checkoutPage.goto()
+            await checkoutPage.fillInfo(c.info)
+            await checkoutPage.continue()
+
+            await expect(checkoutPage.errorMessage).toHaveText(c.error)
+            await checkoutPage.expectLoaded()
+        })
     }
-    const dataWithoutPostalCode: Partial<CheckoutInfo> = {
-        firstName: 'Abdulloh',
-        lastName: 'Tolibjonov'
-    }
-    
-    await inventoryPage.addToCart(backpackName)
-    await inventoryPage.addToCart(tshirtName)
-
-    await expect(inventoryPage.headerComponent.cartBadge).toHaveText('2')
-
-    await inventoryPage.headerComponent.cartButton.click()
-    await cartPage.checkout()
-
-    await checkoutPage.fillInfo(dataWithoutFirstName)
-    await checkoutPage.continue()
-    await expect(checkoutPage.errorMessage).toHaveText(MESSAGES.first_name_required)
-
-    await checkoutPage.lastNameInput.clear()
-    await checkoutPage.fillInfo(dataWithoutLastName)
-    await checkoutPage.continue()
-    await expect(checkoutPage.errorMessage).toHaveText(MESSAGES.last_name_required)
-
-    await checkoutPage.postalCodeInput.clear()
-    await checkoutPage.fillInfo(dataWithoutPostalCode)
-    await checkoutPage.continue()
-    await expect(checkoutPage.errorMessage).toHaveText(MESSAGES.postal_code_required)
 })
 
 test('user can complete checkout with correct totals', { tag: ['@smoke']}, async({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
