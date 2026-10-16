@@ -810,7 +810,7 @@ Fixtures are **lazy**: a test that doesn't list `loggedIn` never logs in.
 
 Tick them off as you write them. Suggested file in brackets.
 
-**Status 2026-10-14:** 12 done, 5 partial, 11 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
+**Status 2026-10-16:** 17 done, 0 partial, 11 open (28 total). *partial* = a test exists but misses part of the scenario — the note says what's missing.
 
 **Login** `[login.spec.ts]`
 - [x] Successful login → redirected to inventory
@@ -827,20 +827,20 @@ Tick them off as you write them. Suggested file in brackets.
 - [ ] 6 products rendered (`toHaveCount(6)`)
 - [x] Sort A→Z, Z→A: compare displayed names against a sorted copy
 - [x] Sort price low→high, high→low: compare displayed prices against a sorted copy
-- [ ] Add to cart → badge = 1; button text changes to "Remove" — *partial: badge checked, button text not asserted*
+- [x] Add to cart → badge = 1; button text changes to "Remove"
 - [x] Remove from inventory page → badge disappears
 - [ ] Product details page shows the same name/price as the card; add to cart from there
 - [ ] `problem_user`: sorting is broken → mark with `test.fail()` (documents a known bug)
 
 **Cart** `[cart.spec.ts]`
-- [ ] Cart lists added items with correct names and prices — *partial: names checked, prices not*
-- [ ] Remove item in cart updates list and badge — *partial: list checked, badge not*
+- [x] Cart lists added items with correct names and prices
+- [x] Remove item in cart updates list and badge
 - [ ] Continue Shopping returns to inventory, cart kept
 - [ ] Cart survives a page reload (it's in localStorage)
 
 **Checkout** `[checkout.spec.ts]`
 - [x] Full happy path (info → overview → complete; "Thank you for your order!"; badge gone)
-- [ ] Missing first name / last name / postal code → matching error (data-driven) — *partial: all 3 errors checked in one test, not data-driven yet*
+- [x] Missing first name / last name / postal code → matching error (data-driven)
 - [x] Order math: subtotal = sum of item prices; tax = round(subtotal × 0.08, 2); total =
       subtotal + tax — compare in cents — *done 2026-10-16 in the smoke checkout test*
 - [ ] Cancel on step 1 returns to cart

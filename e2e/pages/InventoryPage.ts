@@ -22,6 +22,14 @@ export class InventoryPage extends BasePage {
         this.images = page.getByTestId('inventory-item').getByRole('img')
     }
 
+    // The cart button on a product card: reads "Add to cart" or "Remove" depending on cart state.
+    // The name filter is needed — the card's image and title links also have role="button".
+    cartButtonFor(name: string): Locator {
+        return this.inventoryItems
+            .filter({ hasText: name })
+            .getByRole('button', { name: /^(Add to cart|Remove)$/ })
+    }
+
     async addToCart(name: string): Promise<void> {
         await this.inventoryItems
             .filter({ hasText: name })

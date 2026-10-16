@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types ✅; data-driven checkout errors ✅; order math in cents ✅; partial scenarios next). See "Phase 3 — next session" below |
+| 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -181,8 +181,24 @@ hides 1-cent bugs. Convert to integer cents **once** at the boundary (`Math.roun
 exact integer math. The old test never checked the tax *rate* — `total ≈ subtotal + tax` passes with
 any tax value; a rule from the spec (8%) is what catches a wrong calculation.
 
-**▶ Start here next session: Task 4** (partial scenarios: add-to-cart button text, cart prices +
-badge after remove), then Phase 4 (API).
+**Done 2026-10-16 (Phase 3):** Task 4 — partial scenarios finished. `InventoryPage.cartButtonFor(name)`
+(card button, "Add to cart" ↔ "Remove"); inventory test asserts the text flips both ways. Cart test
+also checks prices against `PRODUCTS` and the badge (`'1'`) after removing an item.
+Exit run found a **flaky** smoke checkout on Firefox (1/215; reproduced 3/30 with `--repeat-each=30`):
+the "Pony Express" image above **Back Home** loaded after Playwright measured the button and pushed
+it ~72px down → click hit empty space → `waitForURL('/inventory.html')` timed out. Fix in
+`CheckoutCompletePage.backHome()`: `expect(ponyImage).toHaveJSProperty('complete', true)` before the
+click. After: 0/60 on Firefox, exit run 215/215 green. **Phase 3 done.**
+
+**Learned (Task 4):** `getByRole('button')` matches anything with `role="button"`, not just `<button>`
+— add `{ name }` to pick the right one (strict mode caught it). A flaky test is a bug report: don't
+add retries or `waitForTimeout`, reproduce it (`--repeat-each=30 --trace=retain-on-failure`), then
+find *why*. The trace's `input` event shows where Playwright clicked; comparing it with the failure
+screenshot showed the button had moved. Playwright's actionability checks (visible, stable, enabled)
+only cover the moment **before** the click — a layout shift during it isn't caught. Fix the race by
+waiting for the thing that moves the layout. Firefox-only because image decode timing differs.
+
+**▶ Start here next session: Phase 4 (API)** — read `API-TESTING.md`, then step 1.
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
@@ -204,7 +220,7 @@ badge after remove), then Phase 4 (API).
   > - [x] Assert the error, then that you're still on step one; no `.clear()` calls needed
   > - [x] Run chromium + firefox (47 green) — commit pending user review
 - [x] order math in cents with tax rate (subtotal + tax = total, no float errors)
-- partial: add-to-cart button text, cart prices + badge after remove
+- [x] partial: add-to-cart button text, cart prices + badge after remove
 Optional: `webkit` / mobile web project; JSON API mocking on `demo.playwright.dev/api-mocking`
 (`E2E-TESTING.md` §5.4); `@typescript-eslint/no-floating-promises`.
 

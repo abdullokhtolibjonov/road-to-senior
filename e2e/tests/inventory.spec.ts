@@ -2,12 +2,17 @@ import { expect, test } from '../fixtures/test'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
-test('Add a product to cart and remove it, verify badge count', { tag: ['@inventory']}, async ({ inventoryPage }) => {
+test('Add a product to cart and remove it, verify badge count and button text', { tag: ['@inventory']}, async ({ inventoryPage }) => {
+    const backpackButton = inventoryPage.cartButtonFor('Sauce Labs Backpack')
+    await expect(backpackButton).toHaveText('Add to cart')
+
     await inventoryPage.addToCart('Sauce Labs Backpack')
     await expect(inventoryPage.headerComponent.cartBadge).toHaveText('1')
+    await expect(backpackButton).toHaveText('Remove')
 
     await inventoryPage.remove('Sauce Labs Backpack')
     await expect(inventoryPage.headerComponent.cartBadge).toBeHidden()
+    await expect(backpackButton).toHaveText('Add to cart')
 })
 
 test('inventory items price low to high and high to low', { tag: ['@inventory']}, async ({ inventoryPage }) => {

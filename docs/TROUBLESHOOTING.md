@@ -53,6 +53,8 @@ project (with fixes), a command cheat sheet, and where to find authoritative ans
 |---|---|---|
 | `Executable doesn't exist at ...ms-playwright...` | browsers not installed (or Playwright upgraded) | `npx playwright install` (or `npx playwright install firefox`) |
 | `strict mode violation: getByTestId('x') resolved to 6 elements` | locator matches several elements and you acted on it | narrow it: `.filter({ hasText: 'Backpack' })`, `.first()` only if order truly doesn't matter |
+| `getByRole('button')` inside a product card resolves to 3 elements | SauceDemo's image and title links have `role="button"` too | add the accessible name: `getByRole('button', { name: /^(Add to cart\|Remove)$/ })` |
+| Click "succeeds" but nothing happens, then `waitForURL` times out (flaky, ~10%) | layout shift: an image above loaded after Playwright measured the button, so the click hit its old position (trace `input` box ≠ screenshot position) | wait for whatever moves the layout first, e.g. `await expect(img).toHaveJSProperty('complete', true)` |
 | `Test timeout of 30000ms exceeded` / `waiting for getByTestId(...)` | element never appeared: wrong locator, wrong page, or not logged in | open the trace, look at the DOM snapshot at that step; check the URL |
 | `expect(...).toHaveURL` fails with `.../inventory.html?` or trailing `/` | exact string match | use a regex: `toHaveURL(/inventory\.html/)` |
 | `No tests found` | wrong `testDir`/`testMatch`, or `--project` filter | check `playwright.config.ts`; `npx playwright test --list` shows what it sees |
