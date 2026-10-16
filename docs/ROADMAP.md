@@ -25,7 +25,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 0 — Environment | ✅ done | `playwright-report/` is ignored and lint passes. Optional: also ignore `test-results/`, `blob-report/` and the Allure folders (step 6) |
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
-| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types ✅; data-driven checkout errors ✅; order math in cents (next)). See "Phase 3 — next session" below |
+| 3 — Advanced E2E | 🟡 in progress | All 7 steps done; exit run (chromium + firefox, `--repeat-each=5`) green. Remaining: deliverable gaps (other user types ✅; data-driven checkout errors ✅; order math in cents ✅; partial scenarios next). See "Phase 3 — next session" below |
 | 4 — API | ⬜ | `api/` folder exists, empty |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
@@ -169,7 +169,20 @@ broken case (hid the other two) and depended on leftover form state (`.clear()`)
 the behaviour under test needs — form validation doesn't read the cart, so skip inventory/cart steps
 (faster, fewer unrelated failure points). Workflow from 2026-10-16: Claude implements, user reviews.
 
-**▶ Start here next session: Task 3** (order math in cents), then Phase 4 (API).
+**Done 2026-10-16 (Phase 3):** Task 3 — order math in cents. `TAX_RATE = 0.08` in
+`test-data/products.ts`, `sumCents()` in `utils/money.ts`. The smoke checkout test converts every
+amount with `toCents` and asserts with `toBe`: subtotal = sum of overview item prices = sum of
+`PRODUCTS`; tax = `Math.round(subtotal × TAX_RATE)`; total = subtotal + tax. Inverse check: with
+`TAX_RATE = 0.07` the test fails (`Expected 322, Received 368`). Full suite 47 green.
+
+**Learned (Task 3):** `0.1 + 0.2 === 0.30000000000000004` — binary floats can't store most decimal
+fractions exactly, so money in floats + `toBe` is flaky by design. `toBeCloseTo` hides that but also
+hides 1-cent bugs. Convert to integer cents **once** at the boundary (`Math.round(x * 100)`), then do
+exact integer math. The old test never checked the tax *rate* — `total ≈ subtotal + tax` passes with
+any tax value; a rule from the spec (8%) is what catches a wrong calculation.
+
+**▶ Start here next session: Task 4** (partial scenarios: add-to-cart button text, cart prices +
+badge after remove), then Phase 4 (API).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
@@ -190,7 +203,7 @@ the behaviour under test needs — form validation doesn't read the cart, so ski
   >   to test form validation (hint: `checkoutPage.goto()`)
   > - [x] Assert the error, then that you're still on step one; no `.clear()` calls needed
   > - [x] Run chromium + firefox (47 green) — commit pending user review
-- order math in cents with tax rate (subtotal + tax = total, no float errors)
+- [x] order math in cents with tax rate (subtotal + tax = total, no float errors)
 - partial: add-to-cart button text, cart prices + badge after remove
 Optional: `webkit` / mobile web project; JSON API mocking on `demo.playwright.dev/api-mocking`
 (`E2E-TESTING.md` §5.4); `@typescript-eslint/no-floating-promises`.

@@ -841,8 +841,8 @@ Tick them off as you write them. Suggested file in brackets.
 **Checkout** `[checkout.spec.ts]`
 - [x] Full happy path (info → overview → complete; "Thank you for your order!"; badge gone)
 - [ ] Missing first name / last name / postal code → matching error (data-driven) — *partial: all 3 errors checked in one test, not data-driven yet*
-- [ ] Order math: subtotal = sum of item prices; tax = round(subtotal × 0.08, 2); total =
-      subtotal + tax — compare in cents — *partial: subtotal from `PRODUCTS` and total = subtotal + tax checked with `toBeCloseTo`; tax rate and cents comparison not done*
+- [x] Order math: subtotal = sum of item prices; tax = round(subtotal × 0.08, 2); total =
+      subtotal + tax — compare in cents — *done 2026-10-16 in the smoke checkout test*
 - [ ] Cancel on step 1 returns to cart
 
 **Cross-cutting (Phase 3)** `[network.spec.ts]`

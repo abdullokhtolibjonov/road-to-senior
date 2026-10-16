@@ -15,3 +15,7 @@ export function parsePrice(text: string | null): number {
 export function toCents(dollars: number): number {
     return Math.round(dollars * 100);
 }
+
+export function sumCents(cents: number[]): number {
+    return cents.reduce((sum, c) => sum + c, 0);
+}

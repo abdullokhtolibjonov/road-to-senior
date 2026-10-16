@@ -6,3 +6,6 @@ export const PRODUCTS = {
     'Sauce Labs Onesie': 7.99,
     'Test.allTheThings() T-Shirt (Red)': 15.99
 } as const
+
+// SauceDemo charges 8% tax on the item total, rounded to cents.
+export const TAX_RATE = 0.08

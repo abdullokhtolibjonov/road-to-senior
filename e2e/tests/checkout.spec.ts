@@ -1,7 +1,8 @@
 import { test, expect } from '../fixtures/test'
 import type { CheckoutInfo } from '../utils/types/types';
 import { MESSAGES } from '../test-data/messages'
-import { PRODUCTS } from '../test-data/products'
+import { PRODUCTS, TAX_RATE } from '../test-data/products'
+import { sumCents, toCents } from '../utils/money'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
@@ -51,8 +52,8 @@ test('user can complete checkout with correct totals', { tag: ['@smoke']}, async
         lastName: 'Tolibjonov',
         postalCode: '011700'
     }
-    const expectedSubtotal = PRODUCTS[backpackName] + PRODUCTS[tshirtName]
-    
+    const expectedSubtotalCents = toCents(PRODUCTS[backpackName]) + toCents(PRODUCTS[tshirtName])
+
     await inventoryPage.addToCart(backpackName)
     await inventoryPage.addToCart(tshirtName)
 
@@ -64,10 +65,16 @@ test('user can complete checkout with correct totals', { tag: ['@smoke']}, async
     await checkoutPage.fillInfo(data)
     await checkoutPage.continue()
 
-    const { subtotal, tax, total } = await checkoutOverviewPage.getSummary()
-    
-    expect(subtotal).toBeCloseTo(expectedSubtotal, 2)
-    expect(total).toBeCloseTo(subtotal + tax, 2)
+    const summary = await checkoutOverviewPage.getSummary()
+    const subtotalCents = toCents(summary.subtotal)
+    const taxCents = toCents(summary.tax)
+    const itemCents = (await checkoutOverviewPage.getPrices()).map(toCents)
+
+    // Money is compared in whole cents: integers have no float rounding errors.
+    expect(subtotalCents).toBe(sumCents(itemCents))
+    expect(subtotalCents).toBe(expectedSubtotalCents)
+    expect(taxCents).toBe(Math.round(subtotalCents * TAX_RATE))
+    expect(toCents(summary.total)).toBe(subtotalCents + taxCents)
     expect(await checkoutOverviewPage.getNames()).toEqual([backpackName, tshirtName])
 
     await checkoutOverviewPage.finish()
