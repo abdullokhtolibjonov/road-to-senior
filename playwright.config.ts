@@ -36,5 +36,16 @@ export default defineConfig({
   }, {
     name: 'setup',
     testMatch: /.*\.setup\.ts/,
+  }, {
+    // API tests: no browser, no login state — just HTTP calls through the `request` fixture.
+    name: 'api',
+    testDir: 'api/tests',
+    use: {
+      baseURL: 'https://reqres.in',
+      extraHTTPHeaders: {
+        // `||` not `??`: in CI an unset secret arrives as '' and '' ?? x === ''
+        'x-api-key': process.env.REQRES_API_KEY || 'reqres-free-v1'
+      }
+    }
   }]
 })

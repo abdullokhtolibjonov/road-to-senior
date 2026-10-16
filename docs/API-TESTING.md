@@ -19,6 +19,11 @@ Since 2025 reqres.in requires an API-key header on most requests. Without it you
 reqres.in homepage for the current value if that stops working. Put it in config (see §3), never
 hard-code it in tests.
 
+> **Checked 2026-10-16:** the key is currently **not enforced** — `GET /api/users/2`, `POST /api/users`
+> and `POST /api/login` all succeed without it (200/201). We still send it (free, and reqres has
+> changed this before), but there is no 401 to test right now. Responses also carry extra
+> `support`/`_meta` marketing fields — zod ignores unknown keys, so schemas stay small.
+
 ### Rate limit
 
 The free tier is rate-limited: after a burst of requests you get **429 Too Many Requests** (seen
@@ -523,7 +528,7 @@ should throw — assert with `await expect(promise).rejects.toThrow(/Timeout/)`.
 - [ ] POST register missing password — 400, `Missing password`
 - [ ] POST register undefined user — 400, error present
 - [ ] POST login success / failure
-- [ ] Missing API key (`request.newContext` without the header, or override header) — 401
+- [ ] ~~Missing API key — 401~~ — not enforced by reqres as of 2026-10-16 (see §1); re-check before writing it
 - [ ] Delayed endpoint vs a short timeout — request fails with a timeout
 - [ ] Data-driven: several invalid payloads from one array (like E2E §5.2)
 

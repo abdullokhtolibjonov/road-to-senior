@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | ⬜ | `api/` folder exists, empty |
+| 4 — API | 🟡 in progress | Step 4.1 done (zod 4 installed, `api` project, `test:api`). Next: 4.2 schemas. See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -198,7 +198,26 @@ screenshot showed the button had moved. Playwright's actionability checks (visib
 only cover the moment **before** the click — a layout shift during it isn't caught. Fix the race by
 waiting for the thing that moves the layout. Firefox-only because image decode timing differs.
 
-**▶ Start here next session: Phase 4 (API)** — read `API-TESTING.md`, then step 1.
+**▶ Phase 3 closed.** Phase 4 notes below.
+
+### Phase 4 — progress
+
+**Done 2026-10-16:** step 4.1 — `npm i -D zod` (v4). `api` project in `playwright.config.ts`
+(`testDir: 'api/tests'`, `baseURL: 'https://reqres.in'`, `extraHTTPHeaders` with
+`x-api-key: process.env.REQRES_API_KEY || 'reqres-free-v1'`, no `dependencies` → no login setup).
+Scripts: `test:e2e` = `--project=chromium --project=firefox`, new `test:api` = `--project=api`.
+First raw test `api/tests/users.spec.ts` (`request.get('/api/users/2')` → 200, `data.id === 2`), ~1s.
+Probed reqres with curl: API key not enforced anymore (200/201 without it) → 401 test dropped.
+
+**Learned (4.1):** a project is a named set of settings — project `use` overrides top-level `use`
+(the api project replaces SauceDemo's `baseURL`; `testIdAttribute` etc. are simply unused).
+`extraHTTPHeaders` are added to every `request` call, so tests never mention the key.
+`||` vs `??`: `??` only replaces `null`/`undefined`; an empty CI secret is `''` → use `||`.
+Always probe the real API (curl) before trusting docs — reqres changed its key rule.
+`response.json()` returns `any` → `body.data.id` compiles even if `data` doesn't exist; step 4.2 fixes
+this with zod.
+
+**▶ Start here next: step 4.2** (schemas in `api/schemas/`).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
