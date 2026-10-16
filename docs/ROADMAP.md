@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | 🟡 in progress | Steps 4.1–4.2 done (zod 4, `api` project, schemas). Next: 4.3 clients. See "Phase 4 — progress" below |
+| 4 — API | 🟡 in progress | Steps 4.1–4.3 done (zod 4, `api` project, schemas, typed clients). Next: 4.4 fixtures. See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -234,7 +234,24 @@ don't break us); `z.strictObject` rejects them (used only where "exactly `{}`" i
 `z.email()`, `z.url()`, `z.iso.datetime()` (v3 was `z.string().email()` …). `parse` throws,
 `safeParse` returns `{ success, data | error }`; `z.prettifyError` makes it readable.
 
-**▶ Start here next: step 4.3** (typed clients: `BaseClient`, `UsersClient`, `AuthClient`).
+**Done 2026-10-16:** step 4.3 — clients. `api/clients/ApiResponse.ts` (`ApiResponse<T>`: `status`,
+`body()` validates with the success schema, `bodyAs(schema)` for other shapes, error message =
+URL + status + `z.prettifyError` + full body). `BaseClient.ts`: protected generic
+`get/post/put/patch<T>(url, schema, options?)` → `Promise<ApiResponse<T>>` via one private `send()`
+over `request.fetch`; `delete(url)` → raw `APIResponse`; `RequestOptions = Parameters<APIRequestContext['fetch']>[1]`.
+`UsersClient` (`listUsers`, `getUser`, `createUser`, `updateUser`, `patchUser`, `deleteUser`) and
+`AuthClient` (`register`, `login`). Throwaway probe: all 10 calls OK against live reqres; wrong schema
+→ clear error; `body.data.idd` → `tsc` TS2339. `users.spec.ts` uses `new UsersClient(request)` (temporary).
+
+**Learned (4.3):** generics = a type parameter filled in per call: `get<T>(url, schema: z.ZodType<T>)`
+— pass `UserListSchema` and T *becomes* `UserList` (inferred, never written by the caller). One
+generic method replaces one hand-typed method per endpoint. `Parameters<F>[1]` borrows a library's
+option type instead of copying it. `protected` = usable by subclasses, invisible to tests — so tests
+can only call meaningful actions (`getUser(2)`), never raw URLs. A subclass method can't reuse a
+parent's name with a different signature (`get(id)` vs `get(url, schema)`) → action names
+(`getUser`). zod's default `z.object` *strips* unknown keys from the parsed result (`_meta` gone).
+
+**▶ Start here next: step 4.4** (`api/fixtures/test.ts` providing `usersClient` / `authClient`).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
