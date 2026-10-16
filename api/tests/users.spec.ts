@@ -45,6 +45,27 @@ test.describe('Users API', { tag: ['@users'] }, () => {
         expect(body.total).toBe(total)
     })
 
+    test('GET /users/search returns only matching users', async ({ usersClient }) => {
+        const response = await usersClient.searchUsers('john')
+        expect(response.status).toBe(200)
+
+        const body = await response.body()
+        expect(body.users.length).toBeGreaterThan(0)
+        expect(body.total).toBe(body.users.length)
+        for (const user of body.users) {
+            expect(`${user.firstName} ${user.lastName}`.toLowerCase()).toContain('john')
+        }
+    })
+
+    test('GET /users/search with no match returns an empty list', async ({ usersClient }) => {
+        const response = await usersClient.searchUsers('zzzz')
+        expect(response.status).toBe(200)
+
+        const body = await response.body()
+        expect(body.users).toEqual([])
+        expect(body.total).toBe(0)
+    })
+
     test('GET /users/:id returns that user', async ({ usersClient }) => {
         const response = await usersClient.getUser(EMILY.id)
         expect(response.status).toBe(200)

@@ -22,6 +22,10 @@ export class UsersClient extends BaseClient {
         return this.get('/users', UserListSchema, { params: { limit: 1, delay: delayMs }, timeout: timeoutMs })
     }
 
+    searchUsers(query: string): Promise<ApiResponse<UserList>> {
+        return this.get('/users/search', UserListSchema, { params: { q: query } })
+    }
+
     // `string` is allowed on purpose, to test invalid ids like 'abc'.
     getUser(id: number | string): Promise<ApiResponse<User>> {
         return this.get(`/users/${id}`, UserSchema)

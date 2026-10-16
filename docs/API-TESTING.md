@@ -566,7 +566,9 @@ should throw — assert with `await expect(promise).rejects.toThrow(/Timeout/)`.
 
 ---
 
-## 4. Test checklist (dummyjson — all done 2026-10-16, 18 tests)
+## 4. Test checklist (dummyjson — all done 2026-10-16, 20 tests)
+
+- [x] Search (`/users/search?q=`) — matches contain the query; no match → `users: []`, `total: 0` (added in 4.6 as the "new endpoint in < 15 min" check)
 
 - [x] GET list — 200, `limit`/`skip` echoed, `users.length === limit`, ids unique
 - [x] GET list past the end — `skip = total` (read from the API, not hard-coded) → `users: []`

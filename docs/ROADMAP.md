@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | 🟡 in progress | Steps 4.1–4.5 done; target switched reqres → dummyjson (rate limit); 18 API tests green. Next: 4.6 exit check See "Phase 4 — progress" below |
+| 4 — API | ✅ done | dummyjson (reqres dropped: 40 req/day); 20 API tests, ~4s; exit checks passed 2026-10-16. Optional: time yourself adding `/users/filter` | See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -288,7 +288,24 @@ context from `workerInfo.project.use.baseURL` and disposes it after `use()`. Ask
 that can change (`total`) instead of hard-coding them. `await expect(promise).rejects.toThrow()` for
 calls that must fail. `test.fail()` always needs the inverse check (remove it, read the real error).
 
-**▶ Start here next: step 4.6** (exit check: break `UserSchema` on purpose, read the error; time a new endpoint test).
+**Done 2026-10-16:** step 4.6 — exit checks. (1) `UserSchema.id` → `z.string()`: the list test
+fails with `Schema validation failed for https://dummyjson.com/users?limit=5&skip=10 (status 200):
+✖ Invalid input: expected string, received number → at users[0].id` + full body. `tsc` still passed
+(exit 0). Reverted. (2) New endpoint `/users/search?q=`: probe → `searchUsers()` (reuses
+`UserListSchema`) → 2 tests (matches contain "john"; "zzzz" → empty, total 0) → green in 22s (Claude's
+time — the real criterion is the user's own time; optional exercise below). Full suite 67/67 green.
+**Phase 4 done.**
+
+**Learned (4.6):** the broken schema compiled because `expect(x).toBe(y)` accepts any type — types
+catch *misuse in code* (`body.data.idd`), only the runtime schema catches *wrong data from the
+server*. You need both. A cheap new endpoint = no new schema (same list shape), one client line,
+tests copied from an existing pattern — that's what the layers buy.
+
+**Optional exercise (user, ≤15 min):** add `GET /users/filter?key=hair.color&value=Brown` —
+`filterUsers(key, value)` in `UsersClient` + a test that every returned user… (hint: `UserSchema`
+doesn't include `hair` yet — extend it or add a narrow schema).
+
+**▶ Start here next: Phase 5 (k6 performance)** — read `PERFORMANCE-TESTING.md`; k6 not installed yet.
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
