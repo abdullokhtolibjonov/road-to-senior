@@ -9,6 +9,7 @@ export class InventoryPage extends BasePage {
     protected readonly path = '/inventory.html'
     readonly prices: Locator
     readonly itemNames: Locator
+    readonly images: Locator
     private get inventoryItems() {
         return this.page.getByTestId('inventory-item')
     }
@@ -18,6 +19,7 @@ export class InventoryPage extends BasePage {
         this.headerComponent = new HeaderComponent(page)
         this.prices = page.getByTestId('inventory-item-price')
         this.itemNames = page.getByTestId('inventory-item-name')
+        this.images = page.getByTestId('inventory-item').getByRole('img')
     }
 
     async addToCart(name: string): Promise<void> {
