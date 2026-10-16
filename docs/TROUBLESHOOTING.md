@@ -71,6 +71,7 @@ project (with fixes), a command cheat sheet, and where to find authoritative ans
 |---|---|---|
 | reqres returns `401 {"error":"Missing API key"}` | missing header | `extraHTTPHeaders: { 'x-api-key': 'reqres-free-v1' }` in the `api` project (check reqres.in for the current key) |
 | reqres returns `429` in random tests | free-tier rate limit (too many requests, e.g. `--repeat-each`) | wait a few minutes; don't repeat API tests; run them once per CI job |
+| API test: `Test timeout of 30000ms exceeded` + `apiRequestContext.fetch: Request context disposed` | the server didn't answer within the test timeout (reqres cold start: 15.7s seen); "disposed" is just cleanup after the timeout | `curl.exe -s -o NUL -w "%{http_code} %{time_total}s" <url>` to time the server; rerun. Only change code if it's consistently slow |
 | `SyntaxError: Unexpected end of JSON input` from `res.json()` | body is empty (e.g. 204) or HTML | assert status first; use `res.text()` for non-JSON |
 | zod: `Invalid input: expected number, received string` at `id` | real API type differs from your schema | decide which is right; update the schema (that's the schema doing its job) |
 

@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | 🟡 in progress | Steps 4.1–4.3 done (zod 4, `api` project, schemas, typed clients). Next: 4.4 fixtures. See "Phase 4 — progress" below |
+| 4 — API | 🟡 in progress | Steps 4.1–4.4 done (zod 4, `api` project, schemas, typed clients, fixtures). Next: 4.5 tests. See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -251,7 +251,19 @@ can only call meaningful actions (`getUser(2)`), never raw URLs. A subclass meth
 parent's name with a different signature (`get(id)` vs `get(url, schema)`) → action names
 (`getUser`). zod's default `z.object` *strips* unknown keys from the parsed result (`_meta` gone).
 
-**▶ Start here next: step 4.4** (`api/fixtures/test.ts` providing `usersClient` / `authClient`).
+**Done 2026-10-16:** step 4.4 — `api/fixtures/test.ts`: `base.extend<ApiFixtures>` with `usersClient`
+and `authClient`, each `new XClient(request)` from the built-in `request` fixture; re-exports `expect`.
+`users.spec.ts` imports `test`/`expect` from `../fixtures/test` and asks for `{ usersClient }`.
+First run timed out (30s, "Request context disposed"): reqres itself answered in 15.7s on a cold
+curl, then 0.3s — external slowness, not our code. 3 reruns green (~1s).
+
+**Learned (4.4):** fixtures compose — custom `usersClient` depends on built-in `request`, which
+already has `baseURL` + headers from the project. "Request context disposed" after a timeout is a
+*consequence* (Playwright cleaned up), not the cause — read the first error line ("Test timeout")
+and check the dependency (curl with timing `-w %{time_total}`) before changing code. Tests against
+a public API inherit its outages/cold starts; that's why Phase 4 keeps them few and CI retries exist.
+
+**▶ Start here next: step 4.5** (the test checklist in `API-TESTING.md` §4).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
