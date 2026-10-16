@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | 🟡 in progress | Steps 4.1–4.4 done (zod 4, `api` project, schemas, typed clients, fixtures). Next: 4.5 tests. See "Phase 4 — progress" below |
+| 4 — API | 🟡 in progress | Steps 4.1–4.5 done; target switched reqres → dummyjson (rate limit); 18 API tests green. Next: 4.6 exit check See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -263,7 +263,32 @@ already has `baseURL` + headers from the project. "Request context disposed" aft
 and check the dependency (curl with timing `-w %{time_total}`) before changing code. Tests against
 a public API inherit its outages/cold starts; that's why Phase 4 keeps them few and CI retries exist.
 
-**▶ Start here next: step 4.5** (the test checklist in `API-TESTING.md` §4).
+**2026-10-16 — target switch:** probing the 4.5 error cases hit reqres's new limit: **429 after
+40 requests/day per IP** (`X-Ratelimit-Limit: 40`, resets midnight UTC). Decision (user): switch to
+**dummyjson.com** (no key, ~100 req/min, real JWT login). Config: `baseURL: 'https://dummyjson.com'`,
+API-key header removed. Schemas/clients rewritten for dummyjson; the layers (schemas → `ApiResponse<T>`
+→ `BaseClient` → clients → fixtures) didn't change — only *what* they describe. `BaseClient.delete<T>`
+now takes a schema (dummyjson's DELETE returns the deleted user, reqres returned an empty 204).
+
+**Done 2026-10-16:** step 4.5 — 18 API tests, ~4s. `users.spec.ts` (@users): list page (limit/skip,
+unique ids), past-the-end page (`skip = total` read from the API), single user, invalid ids
+data-driven (9999 → 404, 'abc' → 400), create (201, `toMatchObject`), PUT, PATCH, DELETE
+(`isDeleted` literal, `deletedOn` near now), timeout (`?delay=3000` vs `timeout: 1000` →
+`rejects.toThrow(/Timeout 1000ms exceeded/)`). `auth.spec.ts` (@auth): login success (JWT regex in
+schema), 4 login errors data-driven, `/auth/me` with a **worker-scoped `accessToken` fixture**,
+`/auth/me` without token → 401, invalid token → expects 401, gets **500** → `test.fail()` (verified
+by removing it: `Expected 401, Received 500`). `api/test-data/users.ts`: `EMILY`, `NEW_USER`,
+`API_ERRORS`. Docs: `API-TESTING.md` §1/§4 rewritten for dummyjson (reqres kept collapsed).
+
+**Learned (4.5):** a good architecture survives a backend switch — only schemas, URLs and data
+changed. Write schemas from *probed* responses: `/users/add` returns `email: ''`, so it can't reuse
+`UserSchema` (`z.email()` rejects `''`). Worker-scoped fixture = runs once per worker process, shared
+by its tests (`[fn, { scope: 'worker' }]`); it can't use test-scoped `request`, so it builds its own
+context from `workerInfo.project.use.baseURL` and disposes it after `use()`. Ask the API for facts
+that can change (`total`) instead of hard-coding them. `await expect(promise).rejects.toThrow()` for
+calls that must fail. `test.fail()` always needs the inverse check (remove it, read the real error).
+
+**▶ Start here next: step 4.6** (exit check: break `UserSchema` on purpose, read the error; time a new endpoint test).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
@@ -416,7 +441,7 @@ hit you can explain the actual race condition.
 
 ## Phase 4 — API Testing
 
-**Deliverable:** `api/` suite against reqres.in covering list/get/create/update/delete/register/login
+**Deliverable:** `api/` suite against dummyjson.com (reqres.in until 2026-10-16) covering list/get/create/update/delete/login/me
 plus response schema validation with `zod`, using Playwright's `request` fixture (no browser).
 
 Step-by-step (details in `API-TESTING.md`):

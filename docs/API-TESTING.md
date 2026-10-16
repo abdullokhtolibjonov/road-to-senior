@@ -8,7 +8,51 @@ browser. Same runner, same reports, same fixtures system as E2E.
 
 ---
 
-## 1. Target: https://reqres.in (primary)
+## 1. Target: https://dummyjson.com (primary since 2026-10-16)
+
+> **Why not reqres anymore:** on 2026-10-16 reqres.in started answering **429** after
+> **40 requests/day per IP** without an account (`X-Ratelimit-Limit: 40`, resets at midnight UTC).
+> A suite of ~20 requests could run twice a day, so the target was switched. The reqres notes are
+> kept collapsed at the end of this section, and the reference solutions in §3 were written for
+> reqres — the real code in `api/` is the dummyjson version.
+
+A fake REST API: real-looking data, **writes are simulated** (the response says what *would* have
+happened; nothing is stored). No API key. Rate limit ~**100 requests per ~minute**
+(`x-ratelimit-limit: 100`), plenty for this suite — but still no `--repeat-each` on the `api` project.
+
+### Endpoints & real responses (curl-probed 2026-10-16)
+
+| # | Request | Status | Response body (shape) |
+|---|---|---|---|
+| 1 | `GET /users?limit=5&skip=10` | 200 | `{ users: User[], total, skip, limit }` |
+| 2 | `GET /users?limit=5&skip=<total>` | 200 | `users: []` |
+| 3 | `GET /users/1` | 200 | `User` (~30 fields: id, firstName, lastName, age, email, username, image, role, address, …) |
+| 4 | `GET /users/9999` | 404 | `{ message: "User with id '9999' not found" }` |
+| 5 | `GET /users/abc` | 400 | `{ message: "Invalid user id 'abc'" }` |
+| 6 | `POST /users/add` `{ firstName, lastName, age }` | 201 | our fields + `id: number`; fields we didn't send come back **empty** (`email: ''`) |
+| 7 | `PUT` / `PATCH /users/1` `{ lastName }` | 200 | full user with the change merged in |
+| 8 | `DELETE /users/1` | 200 | full user + `isDeleted: true`, `deletedOn: ISO date` |
+| 9 | `POST /auth/login` `{ username: 'emilys', password: 'emilyspass' }` | 200 | `{ id, username, email, firstName, lastName, gender, image, accessToken, refreshToken }` (tokens are JWTs) |
+| 10 | `POST /auth/login` wrong password / unknown user | 400 | `{ message: 'Invalid credentials' }` |
+| 11 | `POST /auth/login` missing password / empty username / `{}` | 400 | `{ message: 'Username and password required' }` |
+| 12 | `GET /auth/me` + `Authorization: Bearer <accessToken>` | 200 | `User` |
+| 13 | `GET /auth/me` without token | 401 | `{ message: 'Access Token is required' }` |
+| 14 | `GET /auth/me` with an invalid token | **500** | `{ message: 'invalid token' }` — **API bug** (should be 401) → `test.fail()` |
+| 15 | `GET /users?delay=3000` | 200 | normal list, ~3 s later — for timeout tests |
+
+Always verify with a quick manual call before writing a test (PowerShell):
+```powershell
+curl.exe -s "https://dummyjson.com/users/1?select=id,firstName,email"
+curl.exe -s -i "https://dummyjson.com/users/1" | Select-String ratelimit   # remaining budget
+```
+
+> Mock rule: don't write "create then GET to verify persistence" tests — nothing is stored.
+> Assert on the response of the write call itself.
+
+<details>
+<summary>Old target: reqres.in (dropped 2026-10-16)</summary>
+
+### reqres.in (historical)
 
 A fake REST API: responses look real but **writes are not persisted**.
 
@@ -65,6 +109,9 @@ default, so that won't break you.
 
 ---
 
+
+</details>
+
 ## 2. Target folder structure
 
 ```
@@ -90,6 +137,10 @@ api/
 ---
 
 ## 3. Step-by-step
+
+> The reference solutions below were written for **reqres** (endpoints `/api/users`, `x-api-key`,
+> `register`). The design (schemas → `ApiResponse<T>` → `BaseClient` → clients → fixtures) is the
+> same for dummyjson; see the real code in `api/` for the dummyjson version.
 
 ### Step 4.1 — Install zod and add an `api` Playwright project
 
@@ -515,26 +566,23 @@ should throw — assert with `await expect(promise).rejects.toThrow(/Timeout/)`.
 
 ---
 
-## 4. Test checklist
+## 4. Test checklist (dummyjson — all done 2026-10-16, 18 tests)
 
-- [ ] GET list — 200, schema valid, pagination fields are numbers, `data.length <= per_page`
-- [ ] GET list page beyond `total_pages` — 200 and `data` is empty
-- [ ] GET single — 200, schema valid, `id` matches request
-- [ ] GET non-existent — 404, body is exactly `{}`
-- [ ] POST create — 201, echoed fields match payload, `id` and `createdAt` present
-- [ ] PUT and PATCH — 200, `updatedAt` is an ISO date close to now
-- [ ] DELETE — 204, empty body
-- [ ] POST register success — 200, `id` + `token`
-- [ ] POST register missing password — 400, `Missing password`
-- [ ] POST register undefined user — 400, error present
-- [ ] POST login success / failure
-- [ ] ~~Missing API key — 401~~ — not enforced by reqres as of 2026-10-16 (see §1); re-check before writing it
-- [ ] Delayed endpoint vs a short timeout — request fails with a timeout
-- [ ] Data-driven: several invalid payloads from one array (like E2E §5.2)
+- [x] GET list — 200, `limit`/`skip` echoed, `users.length === limit`, ids unique
+- [x] GET list past the end — `skip = total` (read from the API, not hard-coded) → `users: []`
+- [x] GET single — 200, schema valid, `id` and `username` match
+- [x] GET invalid ids (data-driven) — `9999` → 404, `'abc'` → 400, exact `message`
+- [x] POST create — 201, `toMatchObject(payload)`, id checked by schema
+- [x] PUT and PATCH — 200, change applied, untouched fields kept
+- [x] DELETE — 200, `isDeleted: true` (schema literal), `deletedOn` close to now
+- [x] Login success — 200, `id`/`username`, both tokens are JWTs (schema regex)
+- [x] Login errors (data-driven) — wrong password, unknown user, missing password, empty username
+- [x] `/auth/me` with a token from a **worker-scoped** `accessToken` fixture — 200, right user
+- [x] `/auth/me` without token — 401 `Access Token is required`
+- [x] `/auth/me` with an invalid token — expects 401, gets 500 → `test.fail()` (API bug)
+- [x] Delayed endpoint vs a 1 s client timeout — rejects with `Timeout 1000ms exceeded`
 
----
-
-## 5. Stretch target: https://dummyjson.com (auth token + worker fixture)
+## 5. dummyjson auth token + worker fixture (now part of the main suite — see `api/fixtures/test.ts`)
 
 dummyjson **also simulates writes** (POST/PUT/DELETE return what would have happened; nothing is
 stored), but it has a proper login flow that returns a JWT — ideal to practice authenticated

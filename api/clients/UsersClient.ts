@@ -1,40 +1,45 @@
-import type { APIResponse } from '@playwright/test'
 import { BaseClient } from './BaseClient'
 import type { ApiResponse } from './ApiResponse'
 import {
     CreatedUserSchema,
-    SingleUserSchema,
-    UpdatedUserSchema,
+    DeletedUserSchema,
     UserListSchema,
+    UserSchema,
     type CreatedUser,
-    type SingleUser,
-    type UpdatedUser,
+    type DeletedUser,
+    type User,
     type UserList,
     type UserPayload
 } from '../schemas/user.schema'
 
 export class UsersClient extends BaseClient {
-    listUsers(page = 1): Promise<ApiResponse<UserList>> {
-        return this.get('/api/users', UserListSchema, { params: { page } })
+    listUsers(limit: number, skip = 0): Promise<ApiResponse<UserList>> {
+        return this.get('/users', UserListSchema, { params: { limit, skip } })
     }
 
-    getUser(id: number): Promise<ApiResponse<SingleUser>> {
-        return this.get(`/api/users/${id}`, SingleUserSchema)
+    // dummyjson's ?delay=<ms> makes the server wait — used to test client-side timeouts.
+    listUsersDelayed(delayMs: number, timeoutMs: number): Promise<ApiResponse<UserList>> {
+        return this.get('/users', UserListSchema, { params: { limit: 1, delay: delayMs }, timeout: timeoutMs })
+    }
+
+    // `string` is allowed on purpose, to test invalid ids like 'abc'.
+    getUser(id: number | string): Promise<ApiResponse<User>> {
+        return this.get(`/users/${id}`, UserSchema)
     }
 
     createUser(payload: UserPayload): Promise<ApiResponse<CreatedUser>> {
-        return this.post('/api/users', CreatedUserSchema, { data: payload })
+        return this.post('/users/add', CreatedUserSchema, { data: payload })
     }
 
-    updateUser(id: number, payload: UserPayload): Promise<ApiResponse<UpdatedUser>> {
-        return this.put(`/api/users/${id}`, UpdatedUserSchema, { data: payload })
+    updateUser(id: number, payload: UserPayload): Promise<ApiResponse<User>> {
+        return this.put(`/users/${id}`, UserSchema, { data: payload })
     }
 
-    patchUser(id: number, payload: Partial<UserPayload>): Promise<ApiResponse<UpdatedUser>> {
-        return this.patch(`/api/users/${id}`, UpdatedUserSchema, { data: payload })
+    patchUser(id: number, payload: Partial<UserPayload>): Promise<ApiResponse<User>> {
+        return this.patch(`/users/${id}`, UserSchema, { data: payload })
     }
 
-    deleteUser(id: number): Promise<APIResponse> {
-        return this.delete(`/api/users/${id}`)
+    deleteUser(id: number): Promise<ApiResponse<DeletedUser>> {
+        return this.delete(`/users/${id}`, DeletedUserSchema)
     }
 }

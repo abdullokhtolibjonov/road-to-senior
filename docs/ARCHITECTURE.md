@@ -45,7 +45,8 @@ Rules:
 | Tags | `@smoke`, `@regression`, feature tags (`@checkout`) | `@smoke` on 3 "user is blocked" paths (standard login, cart add/remove, full checkout); area tags `@login` `@inventory` `@cart` `@checkout`; `@network` on the interception describe. No `@regression` tag: regression = everything minus `@network` (`--grep-invert`) | Smoke must stay small and mean "a user is blocked", or it becomes as slow as the full suite and gets ignored. A tag nobody sets selects 0 tests, so regression is defined by exclusion | 3 |
 | Retries | 0 locally, 2 in CI; flaky tests fixed, not retried into green | As recommended: `retries: process.env.CI ? 2 : 0`. The one flake found (Back Home layout shift, Firefox ~10%) was reproduced with `--repeat-each=30 --trace=retain-on-failure` and fixed at the cause (wait for the image), not retried | Locally every failure should be visible; in CI retries absorb network blips but the report still marks the test flaky, which is a bug to fix | 3 |
 | API client shape | one client per resource + `BaseClient` + generic `ApiResponse<T>` | As recommended. `BaseClient` has protected generic `get/post/put/patch<T>(url, schema, options)` (+ `delete` returning the raw `APIResponse`); `UsersClient` / `AuthClient` are one-line methods named after the action (`getUser`, `createUser`, `login`). `ApiResponse<T>` exposes `status` and `body()` separately; `bodyAs(schema)` for error/404 bodies | Tests never build URLs or parse JSON. T is inferred from the schema, so every method returns the right type for free. Status is asserted before the body, so a 500 fails as "expected 200, received 500", not as a schema error. Method names like `getUser` avoid clashing with the inherited `get`/`patch`/`delete` | 4 |
-| Schema validation lib | zod (TS-native, types inferred from schemas) | zod 4; one `*.schema.ts` per area; every schema exports its `z.infer` type; `z.object` (extra keys ignored and stripped) except `z.strictObject({})` for the exact-`{}` 404 | Schema and type come from one source and can't drift. reqres adds changing `_meta` marketing fields, so a non-strict object keeps tests stable while still checking every field we use | 4 |
+| Schema validation lib | zod (TS-native, types inferred from schemas) | zod 4; one `*.schema.ts` per area; every schema exports its `z.infer` type; `z.object` (extra keys ignored and stripped). Schemas list only the fields tests rely on (a dummyjson user has ~30) | Schema and type come from one source and can't drift. A non-strict object keeps tests stable when the API adds fields, while still checking every field we use | 4 |
+| API target | reqres.in | **dummyjson.com** (switched 2026-10-16). Worker-scoped `accessToken` fixture logs in once per worker | reqres began rate-limiting anonymous use to 40 requests/day per IP — too few to develop against. dummyjson: no key, ~100 req/min, real JWT login. Known bug: `/auth/me` with a bad token → 500 (tracked with `test.fail()`) | 4 |
 | k6 + TypeScript | k6 ≥ 1.0 native TS; `@types/k6`; separate `performance/k6/tsconfig.json` | | | 5 |
 | k6 targets | public QuickPizza for smoke/load; local QuickPizza (Docker) for stress/spike | | | 5 |
 | Test data strategy | constants for fixed facts (users, products); faker factories for input data | | | 6 |
@@ -59,7 +60,7 @@ Three different targets → three separate settings, never one shared `BASE_URL`
 | Suite | Setting | Where |
 |---|---|---|
 | E2E | `https://www.saucedemo.com` | `use.baseURL` of chromium/firefox projects |
-| API | `https://reqres.in` + `x-api-key` header | `use.baseURL` / `extraHTTPHeaders` of the `api` project |
+| API | `https://dummyjson.com` (no key; reqres + `x-api-key` dropped 2026-10-16) | `use.baseURL` of the `api` project |
 | k6 | `BASE_URL` env var, default QuickPizza | `performance/k6/config.ts` via `__ENV` |
 
 Recommended: a small typed config module for Node-side values, e.g.:
@@ -69,8 +70,7 @@ Recommended: a small typed config module for Node-side values, e.g.:
 export const env = {
   isCI: !!process.env.CI,
   e2eBaseUrl: process.env.E2E_BASE_URL || 'https://www.saucedemo.com',
-  apiBaseUrl: process.env.API_BASE_URL || 'https://reqres.in',
-  reqresApiKey: process.env.REQRES_API_KEY || 'reqres-free-v1',
+  apiBaseUrl: process.env.API_BASE_URL || 'https://dummyjson.com',
 } as const
 ```
 and `playwright.config.ts` imports from it. (Needs Node types — see `TROUBLESHOOTING.md`.) A

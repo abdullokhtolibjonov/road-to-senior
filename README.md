@@ -24,7 +24,7 @@ Tests run against public practice targets, so all focus stays on tooling and Typ
 | Test type | Target | Why |
 |---|---|---|
 | E2E | https://www.saucedemo.com | Purpose-built for UI test practice: login, inventory, cart, checkout; several user types with baked-in bugs |
-| API | https://reqres.in (primary, needs `x-api-key` header), https://dummyjson.com (stretch: JWT auth) | Predictable REST endpoints for CRUD + schema validation |
+| API | https://dummyjson.com (no key, JWT auth; reqres.in dropped 2026-10-16 — 40 requests/day limit) | Predictable REST endpoints for CRUD + schema validation + token auth |
 | Performance | QuickPizza — https://quickpizza.grafana.com or locally via Docker (test.k6.io as fallback) | Built by the Grafana k6 team for load-testing practice. **Never** load-test saucedemo/reqres/dummyjson — see [`docs/PERFORMANCE-TESTING.md`](docs/PERFORMANCE-TESTING.md) |
 
 ## Quick Start
@@ -85,7 +85,7 @@ Read them in this order when starting a phase: **ROADMAP → the phase's deep-di
 |---|---|
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Progress table, all phases with step-by-step tasks and exit criteria, final checklist |
 | [`docs/E2E-TESTING.md`](docs/E2E-TESTING.md) | saucedemo site map, **locator reference**, known texts/prices, Phase 2 POM walkthrough, fixtures, scenario list, Phase 3 patterns (sorting, data-driven, storageState, mocking, tags, flakiness) |
-| [`docs/API-TESTING.md`](docs/API-TESTING.md) | reqres endpoints with expected responses, zod schemas, typed client design, fixtures, tests, dummyjson auth stretch |
+| [`docs/API-TESTING.md`](docs/API-TESTING.md) | dummyjson endpoints with real responses, zod schemas, typed client design, fixtures (incl. worker-scoped token), test checklist |
 | [`docs/PERFORMANCE-TESTING.md`](docs/PERFORMANCE-TESTING.md) | target ethics, k6 install on Windows, native TypeScript, metrics explained, smoke/load/stress/spike scripts, result exports |
 | [`docs/CI-CD.md`](docs/CI-CD.md) | GitHub Actions basics, full `ci.yml` + `performance.yml`, debugging red runs |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layering rules, conventions log with recommended defaults, env config strategy, definition of done |

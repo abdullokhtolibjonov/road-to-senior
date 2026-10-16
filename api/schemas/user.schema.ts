@@ -1,53 +1,54 @@
 import { z } from 'zod'
-import { SupportSchema } from './common.schema'
 
 // ---- reads ----
 
+// A dummyjson user has ~30 fields; we check the ones tests rely on. z.object ignores (and strips) the rest.
 export const UserSchema = z.object({
     id: z.number().int().positive(),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    age: z.number().int().positive(),
+    gender: z.string(),
     email: z.email(),
-    first_name: z.string().min(1),
-    last_name: z.string().min(1),
-    avatar: z.url()
+    username: z.string().min(1),
+    image: z.url(),
+    role: z.enum(['admin', 'moderator', 'user']),
+    address: z.object({
+        city: z.string(),
+        country: z.string()
+    })
 })
 export type User = z.infer<typeof UserSchema>
 
-// GET /api/users?page=N
+// GET /users?limit=N&skip=M
 export const UserListSchema = z.object({
-    page: z.number().int().positive(),
-    per_page: z.number().int().positive(),
+    users: z.array(UserSchema),
     total: z.number().int().nonnegative(),
-    total_pages: z.number().int().nonnegative(),
-    data: z.array(UserSchema),
-    support: SupportSchema
+    skip: z.number().int().nonnegative(),
+    limit: z.number().int().nonnegative()
 })
 export type UserList = z.infer<typeof UserListSchema>
 
-// GET /api/users/:id
-export const SingleUserSchema = z.object({
-    data: UserSchema,
-    support: SupportSchema
-})
-export type SingleUser = z.infer<typeof SingleUserSchema>
+// ---- writes (dummyjson simulates them: nothing is stored) ----
 
-// ---- writes ----
-
-// What we send in POST / PUT / PATCH
+// What we send to POST /users/add, PUT and PATCH /users/:id
 export const UserPayloadSchema = z.object({
-    name: z.string(),
-    job: z.string()
+    firstName: z.string(),
+    lastName: z.string(),
+    age: z.number().int()
 })
 export type UserPayload = z.infer<typeof UserPayloadSchema>
 
-// POST /api/users → 201. Note: id is a STRING here, but a number on GET.
+// POST /users/add → 201. Fields we didn't send come back as '' (e.g. email: ''), so this can't
+// reuse UserSchema — its z.email() would reject ''. Only our fields + the new id are checked.
 export const CreatedUserSchema = UserPayloadSchema.extend({
-    id: z.string().min(1),
-    createdAt: z.iso.datetime()
+    id: z.number().int().positive()
 })
 export type CreatedUser = z.infer<typeof CreatedUserSchema>
 
-// PUT / PATCH /api/users/:id → 200. PATCH echoes only the fields sent, so both are optional.
-export const UpdatedUserSchema = UserPayloadSchema.partial().extend({
-    updatedAt: z.iso.datetime()
+// DELETE /users/:id → 200 with the full user plus deletion info
+export const DeletedUserSchema = UserSchema.extend({
+    isDeleted: z.literal(true),
+    deletedOn: z.iso.datetime()
 })
-export type UpdatedUser = z.infer<typeof UpdatedUserSchema>
+export type DeletedUser = z.infer<typeof DeletedUserSchema>

@@ -40,12 +40,9 @@ export default defineConfig({
     // API tests: no browser, no login state — just HTTP calls through the `request` fixture.
     name: 'api',
     testDir: 'api/tests',
+    // dummyjson: no API key, ~100 requests/minute. (reqres was dropped: 40 requests/day per IP.)
     use: {
-      baseURL: 'https://reqres.in',
-      extraHTTPHeaders: {
-        // `||` not `??`: in CI an unset secret arrives as '' and '' ?? x === ''
-        'x-api-key': process.env.REQRES_API_KEY || 'reqres-free-v1'
-      }
+      baseURL: 'https://dummyjson.com'
     }
   }]
 })

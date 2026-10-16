@@ -1,4 +1,4 @@
-import type { APIRequestContext, APIResponse } from '@playwright/test'
+import type { APIRequestContext } from '@playwright/test'
 import type { z } from 'zod'
 import { ApiResponse } from './ApiResponse'
 
@@ -31,9 +31,8 @@ export abstract class BaseClient {
         return this.send('PATCH', url, schema, options)
     }
 
-    // DELETE answers 204 with an empty body — nothing to validate, so return the raw response.
-    protected delete(url: string, options?: RequestOptions): Promise<APIResponse> {
-        return this.request.fetch(url, { ...options, method: 'DELETE' })
+    protected delete<T>(url: string, schema: z.ZodType<T>, options?: RequestOptions): Promise<ApiResponse<T>> {
+        return this.send('DELETE', url, schema, options)
     }
 
     private async send<T>(method: string, url: string, schema: z.ZodType<T>, options?: RequestOptions): Promise<ApiResponse<T>> {
