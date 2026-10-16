@@ -26,7 +26,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 1 — Playwright fundamentals | ✅ done | |
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
-| 4 — API | 🟡 in progress | Step 4.1 done (zod 4 installed, `api` project, `test:api`). Next: 4.2 schemas. See "Phase 4 — progress" below |
+| 4 — API | 🟡 in progress | Steps 4.1–4.2 done (zod 4, `api` project, schemas). Next: 4.3 clients. See "Phase 4 — progress" below |
 | 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
@@ -217,7 +217,24 @@ Always probe the real API (curl) before trusting docs — reqres changed its key
 `response.json()` returns `any` → `body.data.id` compiles even if `data` doesn't exist; step 4.2 fixes
 this with zod.
 
-**▶ Start here next: step 4.2** (schemas in `api/schemas/`).
+**Done 2026-10-16:** step 4.2 — schemas. `api/schemas/common.schema.ts` (`SupportSchema`,
+`ErrorBodySchema`, `EmptyObjectSchema = z.strictObject({})`), `user.schema.ts` (`UserSchema`,
+`UserListSchema`, `SingleUserSchema`, `UserPayloadSchema`, `CreatedUserSchema` with `id: z.string()`,
+`UpdatedUserSchema = payload.partial().extend({ updatedAt })`), `auth.schema.ts` (`CredentialsSchema`,
+`RegisterSuccessSchema`, `LoginSuccessSchema`); every schema exports its `z.infer` type. Each
+endpoint was curl-probed first; a throwaway spec validated all 10 schemas against live reqres (all OK)
+and showed a wrong schema failing with `✖ expected string, received undefined → at id`.
+`users.spec.ts` now does `SingleUserSchema.parse(await response.json())` → `body` is typed.
+
+**Learned (4.2):** schema = runtime check, `z.infer` = compile-time type, both from one source.
+`response.json()` is `any` — TypeScript can't know what a server sends; `parse` is the boundary
+where `unknown` data becomes a trusted type. `z.object` ignores unknown keys (reqres's `_meta` ads
+don't break us); `z.strictObject` rejects them (used only where "exactly `{}`" is the point).
+`.extend()` / `.partial()` build schemas from schemas, like `Partial<T>` for types. zod 4 syntax:
+`z.email()`, `z.url()`, `z.iso.datetime()` (v3 was `z.string().email()` …). `parse` throws,
+`safeParse` returns `{ success, data | error }`; `z.prettifyError` makes it readable.
+
+**▶ Start here next: step 4.3** (typed clients: `BaseClient`, `UsersClient`, `AuthClient`).
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
