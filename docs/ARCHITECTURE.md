@@ -48,7 +48,7 @@ Rules:
 | Schema validation lib | zod (TS-native, types inferred from schemas) | zod 4; one `*.schema.ts` per area; every schema exports its `z.infer` type; `z.object` (extra keys ignored and stripped). Schemas list only the fields tests rely on (a dummyjson user has ~30) | Schema and type come from one source and can't drift. A non-strict object keeps tests stable when the API adds fields, while still checking every field we use | 4 |
 | API target | reqres.in | **dummyjson.com** (switched 2026-10-16). Worker-scoped `accessToken` fixture logs in once per worker | reqres began rate-limiting anonymous use to 40 requests/day per IP — too few to develop against. dummyjson: no key, ~100 req/min, real JWT login. Known bug: `/auth/me` with a bad token → 500 (tracked with `test.fail()`) | 4 |
 | k6 + TypeScript | k6 ≥ 1.0 native TS; `@types/k6`; separate `performance/k6/tsconfig.json` | | | 5 |
-| k6 targets | public QuickPizza for smoke/load; local QuickPizza (Docker) for stress/spike | | | 5 |
+| k6 targets | public QuickPizza for smoke/load; stress/spike in CI against a QuickPizza service container (Phase 7; no Docker locally) | | | 5 |
 | Test data strategy | constants for fixed facts (users, products); faker factories for input data | | | 6 |
 | Reporter(s) | `list` + `html` locally; + `github` (+ `junit`) in CI; Allure optional | | | 6 |
 | CI browser install | `npx playwright install --with-deps <browser>` per matrix job, no browser cache | | | 7 |

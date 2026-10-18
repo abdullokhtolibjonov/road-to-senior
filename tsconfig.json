@@ -45,5 +45,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  // k6 scripts have their own tsconfig (k6 globals instead of Node's): performance/k6/tsconfig.json
+  "exclude": ["node_modules", "performance"]
 }

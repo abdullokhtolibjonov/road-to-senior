@@ -18,7 +18,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 
 ---
 
-## Current Status (as of 2026-10-16)
+## Current Status (as of 2026-10-18)
 
 | Phase | Status | Notes |
 |---|---|---|
@@ -27,7 +27,7 @@ TypeScript config and POM foundations. Do feel free to re-order Phase 4 (API) be
 | 2 — POM & architecture | ✅ done | 7 page objects + `HeaderComponent`, typed test data, fixtures incl. `loggedIn`; login/inventory/cart/checkout specs green; `ARCHITECTURE.md` Phase 1–2 rows filled |
 | 3 — Advanced E2E | ✅ done | All 7 steps + deliverable gaps done; scenario list 17 done / 0 partial / 11 open (optional extras). Exit run (chromium + firefox, `--repeat-each=5`) 215/215 green on 2026-10-16 after fixing a layout-shift flake |
 | 4 — API | ✅ done | dummyjson (reqres dropped: 40 req/day); 20 API tests, ~4s; exit checks passed 2026-10-16. Optional: time yourself adding `/users/filter` | See "Phase 4 — progress" below |
-| 5 — k6 | ⬜ | `performance/` folder exists, empty; k6 not installed yet |
+| 5 — k6 | 🟡 in progress | 2026-10-18: k6 v2.2.0 (winget) + `@types/k6`; own `performance/k6/tsconfig.json`, root excludes `performance/`, typecheck runs both; step 5.1 done (`config.ts`, `lib/requests.ts`, 3/3 checks green vs public QuickPizza). Docker not installed: needed for local QuickPizza before stress/spike. Step 5.2 smoke done: `scenarios/smoke.ts` + `npm run perf:smoke` (1 VU × 5 iters, 15/15 checks, p95 ≈ 295ms, exit 0). Step 5.3 load done: `scenarios/load.ts` + `npm run perf:load` (0→10→0 VUs over 2m, 752 reqs, p95 294ms, pizza p95 300ms, 1 failed home request = 0.13% → all thresholds ✓, exit 0). Step 5.6 export done early (no Docker needed): `npm run perf:load:report` → `results/load-summary.json` + `load-report.html` (k6 doesn't create the folder → `perf:results-dir`; HTML skipped on runs as short as smoke); impossible `p(95)<1` → exit 99 confirmed. Steps 5.4 stress + 5.5 spike **moved to Phase 7** (no Docker locally; run them in CI against a QuickPizza service container). Next: `ARCHITECTURE.md` Phase 5 decisions → exit criteria |
 | 6 — Reporting & data | ⬜ | |
 | 7 — CI/CD | ⬜ | |
 | 8 — Native mobile (Appium + WebdriverIO) | ⬜ | Android only (Windows); app: WebdriverIO Native Demo App |
@@ -481,7 +481,7 @@ schema (e.g. `id: z.string()`) fails with a clear zod error message.
 
 ## Phase 5 — Performance Testing with k6
 
-**Deliverable:** `performance/k6/` with smoke, load, stress and spike scripts in TypeScript, against
+**Deliverable:** `performance/k6/` with smoke, load, stress and spike scripts in TypeScript (stress/spike moved to Phase 7 (2026-10-18: no Docker locally; GitHub runners have it)), against
 **a target built for load testing only** (QuickPizza / test.k6.io / your own local server — see
 `PERFORMANCE-TESTING.md`).
 
@@ -532,6 +532,10 @@ Step-by-step:
 
 **Deliverable:** GitHub Actions workflow(s) running lint+typecheck+E2E+API on every push/PR, k6 as a
 manual/scheduled job, reports uploaded as artifacts. Full reference YAML in `CI-CD.md`.
+
+**Carried over from Phase 5:** write `stress.ts` + `spike.ts` (PERFORMANCE-TESTING.md steps 5.4/5.5) and run
+them in the k6 job against QuickPizza as a service container (`BASE_URL=http://localhost:3333`) — never
+against the public demo. Document what broke first and at what VU count; whether latency recovered after the spike.
 
 **Exit criteria:** a fresh clone with only `npm ci` passes CI green.
 

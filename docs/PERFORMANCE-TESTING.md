@@ -291,7 +291,7 @@ export default function (): void {
 ```
 </details>
 
-### Step 5.4 — Stress test (local target!)
+### Step 5.4 — Stress test (local target!) — ⏭ moved to Phase 7 (2026-10-18: no Docker locally; GitHub runners have it)
 
 Increase load in steps until thresholds start failing; `abortOnFail` stops the run once the system
 is clearly broken, so you know roughly at which step it happened.
@@ -330,7 +330,7 @@ Write down in `ARCHITECTURE.md` / a results note: *at which VU level* p95 or err
 the line, and what the first symptom was (latency rising vs errors appearing).
 </details>
 
-### Step 5.5 — Spike test (local target!)
+### Step 5.5 — Spike test (local target!) — ⏭ moved to Phase 7 (2026-10-18: no Docker locally; GitHub runners have it)
 
 <details>
 <summary>Reference solution</summary>
@@ -371,7 +371,10 @@ dashboard (next step), which shows latency over time.
 | End-of-test summary as JSON | `k6 run --summary-export=performance/k6/results/load-summary.json performance/k6/scenarios/load.ts` |
 | Every data point (big) | `k6 run --out json=performance/k6/results/raw.json ...` |
 | Live dashboard in the browser + HTML report | PowerShell: `$env:K6_WEB_DASHBOARD='true'; $env:K6_WEB_DASHBOARD_EXPORT='performance/k6/results/load-report.html'; k6 run performance/k6/scenarios/load.ts` (dashboard at http://localhost:5665 while running) |
+| Both in one go (this repo) | `npm run perf:load:report` — same as the dashboard row but via `--out web-dashboard=export=<file>`, so it works in any shell |
 | Custom files | export a `handleSummary(data)` function returning `{ 'path.json': JSON.stringify(data) }`. Note: defining it **replaces** the console summary unless you also return a `stdout` entry |
+
+Gotchas found in practice (k6 v2.2): k6 does **not** create `results/` for you — the export silently fails (`perf:results-dir` creates it first); and the HTML report is skipped on very short runs ("report generation was skipped (not enough data)"), so use it on load, not smoke.
 
 ---
 
@@ -380,14 +383,14 @@ dashboard (next step), which shows latency over time.
 - [ ] k6 ≥ 1.0 installed, `k6 version` works
 - [ ] `@types/k6` + `performance/k6/tsconfig.json`; `npm run typecheck` covers k6 scripts
 - [ ] Smoke test passing
-- [ ] Load test with at least 2 thresholds (incl. `checks`) and one per-endpoint threshold
-- [ ] Stress test (local) — documented: what broke first and at what VU count
-- [ ] Spike test (local) — documented: did latency return to baseline, how fast
-- [ ] JSON summary + HTML dashboard report exported to `performance/k6/results/`
-- [ ] Deliberately set an impossible threshold (`p(95)<1`) and confirm k6 exits with code 99
+- [x] Load test with at least 2 thresholds (incl. `checks`) and one per-endpoint threshold
+- [ ] ⏭ Phase 7 (CI) — Stress test (local) — documented: what broke first and at what VU count
+- [ ] ⏭ Phase 7 (CI) — Spike test (local) — documented: did latency return to baseline, how fast
+- [x] JSON summary + HTML dashboard report exported to `performance/k6/results/`
+- [x] Deliberately set an impossible threshold (`p(95)<1`) and confirm k6 exits with code 99
       (`echo $LASTEXITCODE` in PowerShell) — that's what makes CI fail
 
 ## 7. Decisions to record in `ARCHITECTURE.md`
 
 - TypeScript run natively by k6 ≥ 1.0 (no bundler); types via `@types/k6` + separate tsconfig.
-- Targets: QuickPizza public for smoke/load, local QuickPizza for stress/spike.
+- Targets: QuickPizza public for smoke/load only; stress/spike in CI (Phase 7) against a QuickPizza service container.

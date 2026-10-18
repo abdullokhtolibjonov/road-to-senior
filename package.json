@@ -9,12 +9,16 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p performance/k6",
     "test:e2e": "npx playwright test --project=chromium --project=firefox",
     "test:api": "npx playwright test --project=api",
     "test:e2e:ui": "npx playwright test --ui",
     "test:smoke": "npx playwright test --grep @smoke --project=chromium",
-    "test:regression": "npx playwright test --grep-invert @network"
+    "test:regression": "npx playwright test --grep-invert @network",
+    "perf:smoke": "k6 run performance/k6/scenarios/smoke.ts",
+    "perf:load": "k6 run performance/k6/scenarios/load.ts",
+    "perf:results-dir": "node -e \"require('fs').mkdirSync('performance/k6/results', { recursive: true })\"",
+    "perf:load:report": "npm run perf:results-dir && k6 run --summary-export=performance/k6/results/load-summary.json --out web-dashboard=export=performance/k6/results/load-report.html performance/k6/scenarios/load.ts"
   },
   "repository": {
     "type": "git",
@@ -31,6 +35,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
+    "@types/k6": "^2.3.0",
     "@types/node": "^26.6.2",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",

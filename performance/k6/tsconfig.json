@@ -1,0 +1,11 @@
+{
+    // k6 scripts run in k6's own JS runtime, not Node: swap Node's types for k6's globals
+    // (__ENV, __VU, __ITER) and modules (k6/http, k6/metrics, ...).
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "types": ["k6"]
+    },
+    "include": ["./**/*.ts"],
+    // Reset the root's "exclude", which skips the whole performance/ folder.
+    "exclude": []
+}
