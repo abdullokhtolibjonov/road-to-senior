@@ -8,12 +8,14 @@ export default defineConfig({
     timeout: 5_000
   },
   fullyParallel: true,
+  globalSetup: './shared/global-setup.ts',
   // list = live progress in the terminal, html = the report to read after the run
   // (open it with `npx playwright show-report`). CI adds inline PR annotations (github) and
-  // a JUnit XML file that CI tools can parse.
+  // a JUnit XML file that CI tools can parse. allure-playwright writes raw results to
+  // allure-results/; `npm run report:allure` turns them into a report.
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never' }], ['github'], ['junit', { outputFile: 'results/junit.xml' }]]
-    : [['list'], ['html', { open: 'never' }]],
+    ? [['list'], ['html', { open: 'never' }], ['allure-playwright', { resultsDir: 'allure-results' }], ['github'], ['junit', { outputFile: 'results/junit.xml' }]]
+    : [['list'], ['html', { open: 'never' }], ['allure-playwright', { resultsDir: 'allure-results' }]],
   retries: process.env.CI ? 2: 0,
   use: {
     baseURL: 'https://www.saucedemo.com',

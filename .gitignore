@@ -8,6 +8,8 @@ build/
 /playwright/.cache/
 /blob-report/
 /results/
+/allure-results/
+/allure-report/
 
 # k6
 performance/k6/results/

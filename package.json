@@ -15,6 +15,8 @@
     "test:e2e:ui": "npx playwright test --ui",
     "test:smoke": "npx playwright test --grep @smoke --project=chromium",
     "test:regression": "npx playwright test --grep-invert @network",
+    "report:allure": "allure generate allure-results --clean -o allure-report",
+    "report:allure:open": "allure open allure-report",
     "perf:smoke": "k6 run performance/k6/scenarios/smoke.ts",
     "perf:load": "k6 run performance/k6/scenarios/load.ts",
     "perf:results-dir": "node -e \"require('fs').mkdirSync('performance/k6/results', { recursive: true })\"",
@@ -38,11 +40,16 @@
     "@playwright/test": "^1.63.0",
     "@types/k6": "^2.3.0",
     "@types/node": "^26.6.2",
+    "allure": "^3.22.1",
+    "allure-playwright": "^3.14.0",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.8",
     "typescript": "6.0",
     "typescript-eslint": "^8.70.1",
     "zod": "^4.6.7"
+  },
+  "overrides": {
+    "dompurify": "3.4.17"
   }
 }
