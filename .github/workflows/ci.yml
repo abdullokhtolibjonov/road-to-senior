@@ -4,7 +4,18 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Manual run: Actions → CI → Run workflow. Push/PR runs have no inputs → everything runs.
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite/project to run (e2e = chromium + firefox)
+        type: choice
+        options: [all, api, e2e, e2e-chromium, e2e-firefox]
+        default: all
+      tag:
+        description: 'Only tests matching this tag/regex, e.g. @smoke or @cart|@checkout (empty = all)'
+        type: string
+        default: ''
 
 # A new commit on the same branch cancels the older, now-pointless run.
 concurrency:
@@ -28,6 +39,8 @@ jobs:
 
   api:
     needs: lint-and-typecheck
+    # On push/PR `inputs.suite` is empty, so this is true.
+    if: ${{ !startsWith(inputs.suite, 'e2e') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -38,7 +51,13 @@ jobs:
           cache: npm
       - run: npm ci
       # No browser install: the api project only uses the `request` fixture.
-      - run: npm run test:api
+      # The tag goes through an env var, never ${{ }} inside the script (no shell injection), and
+      # stays one quoted argument. --pass-with-no-tests: a tag like @cart matches nothing here.
+      - run: |
+          if [ -n "$TAG" ]; then set -- --grep "$TAG" --pass-with-no-tests; fi
+          npx playwright test --project=api "$@"
+        env:
+          TAG: ${{ inputs.tag }}
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}     # upload even when tests failed — that's when you need it
         with:
@@ -50,12 +69,14 @@ jobs:
 
   e2e:
     needs: lint-and-typecheck
+    if: ${{ inputs.suite != 'api' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false              # let firefox finish even if chromium fails
       matrix:
-        project: [chromium, firefox]
+        # e2e-chromium / e2e-firefox → one browser; anything else (push, PR, all, e2e) → both.
+        project: ${{ fromJSON(inputs.suite == 'e2e-chromium' && '["chromium"]' || inputs.suite == 'e2e-firefox' && '["firefox"]' || '["chromium", "firefox"]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -73,7 +94,13 @@ jobs:
         if: ${{ matrix.project != 'chromium' }}
         run: npx playwright install --with-deps --only-shell chromium
       # `setup` (login → storageState) runs first via the project's `dependencies`.
-      - run: npx playwright test --project=${{ matrix.project }}
+      # `setup` still runs with --grep (dependencies aren't filtered), so tagged tests stay logged in.
+      - run: |
+          if [ -n "$TAG" ]; then set -- --grep "$TAG" --pass-with-no-tests; fi
+          npx playwright test --project="$PROJECT" "$@"
+        env:
+          TAG: ${{ inputs.tag }}
+          PROJECT: ${{ matrix.project }}
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
