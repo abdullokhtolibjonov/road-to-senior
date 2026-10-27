@@ -93,6 +93,7 @@ project (with fixes), a command cheat sheet, and where to find authoritative ans
 | `LF will be replaced by CRLF` warnings | Windows line endings | add a `.gitattributes` with `* text=auto eol=lf` and commit it |
 | `npm ci` fails: lock file out of sync | `package.json` changed without `npm install` | run `npm install`, commit `package-lock.json` |
 | Works locally, fails in CI with "Cannot find module './loginPage.ts'" | case-sensitive file system on Linux | match the file name's exact casing in imports |
+| CI runs show "cancelled" (grey) when you start a manual run or push (2026-10-27) | `concurrency.group: ci-${{ github.ref }}` + `cancel-in-progress` → manual runs and pushes on `main` share one group and cancel each other | give `workflow_dispatch` its own group: `github.event_name == 'workflow_dispatch' && github.run_id \|\| github.ref` |
 | CI firefox job: `[setup] … browserType.launch: Executable doesn't exist at …/chromium_headless_shell-…` (2026-10-27) | the `setup` project has no device → runs on default chromium; the job installed only firefox (locally both are installed, so it never showed) | in non-chromium jobs also `npx playwright install --with-deps --only-shell chromium` |
 
 ---

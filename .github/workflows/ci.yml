@@ -17,9 +17,10 @@ on:
         type: string
         default: ''
 
-# A new commit on the same branch cancels the older, now-pointless run.
+# A new commit on the same branch cancels the older, now-pointless run. Manual runs get their own
+# group (unique run_id): otherwise they share "ci-refs/heads/main" with pushes and cancel each other.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
