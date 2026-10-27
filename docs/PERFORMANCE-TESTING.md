@@ -291,7 +291,7 @@ export default function (): void {
 ```
 </details>
 
-### Step 5.4 — Stress test (local target!) — ⏭ moved to Phase 7 (2026-10-18: no Docker locally; GitHub runners have it)
+### Step 5.4 — Stress test (local target!) — ⏭ moved to Phase 7 → written 2026-10-27 (`scenarios/stress.ts`, runs in `performance.yml`)
 
 Increase load in steps until thresholds start failing; `abortOnFail` stops the run once the system
 is clearly broken, so you know roughly at which step it happened.
@@ -330,7 +330,7 @@ Write down in `ARCHITECTURE.md` / a results note: *at which VU level* p95 or err
 the line, and what the first symptom was (latency rising vs errors appearing).
 </details>
 
-### Step 5.5 — Spike test (local target!) — ⏭ moved to Phase 7 (2026-10-18: no Docker locally; GitHub runners have it)
+### Step 5.5 — Spike test (local target!) — ⏭ moved to Phase 7 → written 2026-10-27 (`scenarios/spike.ts`, runs in `performance.yml`)
 
 <details>
 <summary>Reference solution</summary>

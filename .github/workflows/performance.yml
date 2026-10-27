@@ -1,0 +1,57 @@
+name: Performance
+
+# Never on push/PR: load tests are slow and their numbers only mean something when run on purpose.
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Which k6 scenario to run
+        type: choice
+        options: [smoke, load, stress, spike]
+        default: smoke
+  schedule:
+    - cron: '0 3 * * 1'             # Mondays 03:00 UTC; scheduled runs have no inputs → smoke
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      # QuickPizza inside the CI VM: a target we're allowed to overload (stress/spike), unlike the
+      # public demo. Pinned: `latest` could change the app between two runs we want to compare.
+      quickpizza:
+        image: ghcr.io/grafana/quickpizza-local:0.15.31
+        ports:
+          - 3333:3333
+    env:
+      SCENARIO: ${{ inputs.scenario || 'smoke' }}
+      BASE_URL: http://localhost:3333
+    steps:
+      - uses: actions/checkout@v7
+      - uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: 2.2.0         # same as local (winget), so local and CI numbers compare
+      # A started container isn't a ready app: wait until it answers before measuring anything.
+      - name: Wait for QuickPizza
+        run: |
+          for i in $(seq 1 30); do
+            curl -fs "$BASE_URL/" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "QuickPizza did not become ready in 60s" && exit 1
+      - name: Run k6 ${{ env.SCENARIO }}
+        env:
+          K6_WEB_DASHBOARD: 'true'
+          K6_WEB_DASHBOARD_EXPORT: performance/k6/results/${{ env.SCENARIO }}-report.html
+        run: |
+          mkdir -p performance/k6/results
+          k6 run \
+            --summary-export="performance/k6/results/$SCENARIO-summary.json" \
+            "performance/k6/scenarios/$SCENARIO.ts"
+      # k6 exits 99 on a failed threshold (fails the job); the results are uploaded either way.
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: k6-${{ env.SCENARIO }}-results
+          path: performance/k6/results/
+          retention-days: 14

@@ -19,6 +19,8 @@
     "report:allure:open": "allure open allure-report",
     "perf:smoke": "k6 run performance/k6/scenarios/smoke.ts",
     "perf:load": "k6 run performance/k6/scenarios/load.ts",
+    "perf:stress": "k6 run -e BASE_URL=http://localhost:3333 performance/k6/scenarios/stress.ts",
+    "perf:spike": "k6 run -e BASE_URL=http://localhost:3333 performance/k6/scenarios/spike.ts",
     "perf:results-dir": "node -e \"require('fs').mkdirSync('performance/k6/results', { recursive: true })\"",
     "perf:load:report": "npm run perf:results-dir && k6 run --summary-export=performance/k6/results/load-summary.json --out web-dashboard=export=performance/k6/results/load-report.html performance/k6/scenarios/load.ts"
   },
