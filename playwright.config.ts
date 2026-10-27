@@ -16,6 +16,8 @@ export default defineConfig({
   reporter: process.env.CI
     ? [['list'], ['html', { open: 'never' }], ['allure-playwright', { resultsDir: 'allure-results' }], ['github'], ['junit', { outputFile: 'results/junit.xml' }]]
     : [['list'], ['html', { open: 'never' }], ['allure-playwright', { resultsDir: 'allure-results' }]],
+  // A forgotten test.only would silently skip the rest of the suite — in CI that's a failure.
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2: 0,
   use: {
     baseURL: 'https://www.saucedemo.com',
