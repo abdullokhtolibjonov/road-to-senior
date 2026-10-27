@@ -8,7 +8,12 @@ export default defineConfig({
     timeout: 5_000
   },
   fullyParallel: true,
-  reporter: 'html',
+  // list = live progress in the terminal, html = the report to read after the run
+  // (open it with `npx playwright show-report`). CI adds inline PR annotations (github) and
+  // a JUnit XML file that CI tools can parse.
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never' }], ['github'], ['junit', { outputFile: 'results/junit.xml' }]]
+    : [['list'], ['html', { open: 'never' }]],
   retries: process.env.CI ? 2: 0,
   use: {
     baseURL: 'https://www.saucedemo.com',
