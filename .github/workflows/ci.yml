@@ -67,6 +67,11 @@ jobs:
       # and the OS dependencies from --with-deps can't be cached anyway).
       - name: Install ${{ matrix.project }} + OS dependencies
         run: npx playwright install --with-deps ${{ matrix.project }}
+      # The `setup` project has no device → it logs in with Playwright's default browser
+      # (chromium), even in the firefox job. The headless shell is enough for that.
+      - name: Install chromium headless shell for the setup project
+        if: ${{ matrix.project != 'chromium' }}
+        run: npx playwright install --with-deps --only-shell chromium
       # `setup` (login → storageState) runs first via the project's `dependencies`.
       - run: npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v7
