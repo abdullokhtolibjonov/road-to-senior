@@ -3,6 +3,7 @@ import { BasePage } from './BasePage'
 import { HeaderComponent } from './components/HeaderComponent'
 import { parsePrice } from '../utils/money'
 import type { CheckoutSummary } from '../utils/types/types'
+import { step } from '../utils/step'
 
 export class CheckoutOverviewPage extends BasePage {
     protected readonly path = '/checkout-step-two.html'
@@ -40,14 +41,16 @@ export class CheckoutOverviewPage extends BasePage {
     }
 
     async getSummary(): Promise<CheckoutSummary> {
-        return {
+        return await step('Read checkout summary', async () => ({
             subtotal: parsePrice(await this.subtotalLabel.textContent()),
             tax: parsePrice(await this.taxLabel.textContent()),
             total: parsePrice(await this.totalLabel.textContent())
-        }
+        }))
     }
 
     async finish() {
-        await this.finishButton.click()
+        await step('Finish checkout', async () => {
+            await this.finishButton.click()
+        })
     }
 }

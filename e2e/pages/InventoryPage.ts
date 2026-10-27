@@ -3,6 +3,7 @@ import type { SortOption } from '../utils/types/types';
 import { BasePage } from './BasePage';
 import { HeaderComponent } from './components/HeaderComponent';
 import { parsePrice } from '../utils/money';
+import { step } from '../utils/step';
 
 export class InventoryPage extends BasePage {
     readonly headerComponent: HeaderComponent
@@ -31,17 +32,21 @@ export class InventoryPage extends BasePage {
     }
 
     async addToCart(name: string): Promise<void> {
-        await this.inventoryItems
-            .filter({ hasText: name })
-            .getByRole('button', { name: 'Add to cart' })
-            .click()
+        await step(`Add "${name}" to cart`, async () => {
+            await this.inventoryItems
+                .filter({ hasText: name })
+                .getByRole('button', { name: 'Add to cart' })
+                .click()
+        })
     }
 
     async remove(name: string): Promise<void> {
-        await this.inventoryItems
-            .filter({ hasText: name })
-            .getByRole('button', { name: 'Remove' })
-            .click()
+        await step(`Remove "${name}" from cart`, async () => {
+            await this.inventoryItems
+                .filter({ hasText: name })
+                .getByRole('button', { name: 'Remove' })
+                .click()
+        })
     }
 
     async getNames(): Promise<string[]> {
@@ -57,6 +62,8 @@ export class InventoryPage extends BasePage {
     }
 
     async sortBy(option: SortOption): Promise<void> {
-        await this.page.getByTestId('product-sort-container').selectOption(option)
+        await step(`Sort products by "${option}"`, async () => {
+            await this.page.getByTestId('product-sort-container').selectOption(option)
+        })
     }
 }

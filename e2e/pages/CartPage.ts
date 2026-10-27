@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage';
 import { parsePrice } from '../utils/money';
 import { HeaderComponent } from './components/HeaderComponent';
+import { step } from '../utils/step';
 
 export class CartPage extends BasePage {
     protected readonly path = '/cart.html';
@@ -23,8 +24,10 @@ export class CartPage extends BasePage {
     }
 
     override async expectLoaded(): Promise<void> {
-        await this.page.waitForURL(this.path);
-        await this.checkoutButton.waitFor({ state: 'visible' });
+        await step('Expect CartPage loaded', async () => {
+            await this.page.waitForURL(this.path);
+            await this.checkoutButton.waitFor({ state: 'visible' });
+        })
     }
     
     async getNames(): Promise<string[]> {
@@ -40,13 +43,17 @@ export class CartPage extends BasePage {
     }
 
     async remove(name: string): Promise<void> {
-        await this.inventoryItems
-            .filter({ hasText: name })
-            .getByRole('button', { name: 'Remove' })
-            .click()
+        await step(`Remove "${name}" from cart`, async () => {
+            await this.inventoryItems
+                .filter({ hasText: name })
+                .getByRole('button', { name: 'Remove' })
+                .click()
+        })
     }
 
     async checkout(): Promise<void> {
-        await this.checkoutButton.click()
+        await step('Go to checkout', async () => {
+            await this.checkoutButton.click()
+        })
     }
 }

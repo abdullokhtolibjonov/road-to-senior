@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage'
 import { credentialsFor, type Role } from '../test-data/users';
+import { step } from '../utils/step';
 
 export class LoginPage extends BasePage {
     protected readonly path = '/';
@@ -18,9 +19,12 @@ export class LoginPage extends BasePage {
         await this.login(username, password)
     }
 
+    // Username only in the title: step titles end up in reports and CI logs, passwords must not.
     async login(username: string, password: string): Promise<void> {
-        await this.usernameInput.fill(username)
-        await this.passwordInput.fill(password)
-        await this.loginButton.click()
+        await step(`Log in as "${username}"`, async () => {
+            await this.usernameInput.fill(username)
+            await this.passwordInput.fill(password)
+            await this.loginButton.click()
+        })
     }
 }

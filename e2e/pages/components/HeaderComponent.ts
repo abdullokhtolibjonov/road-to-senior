@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test'
+import { step } from '../../utils/step'
 
 export class HeaderComponent {
     readonly cartButton: Locator
@@ -16,11 +17,15 @@ export class HeaderComponent {
     }
 
     async logout(): Promise<void> {
-        await this.burgerMenuButton.click()
-        await this.logoutButton.click()
+        await step('Log out', async () => {
+            await this.burgerMenuButton.click()
+            await this.logoutButton.click()
+        })
     }
 
     async openCart(): Promise<void> {
-        await this.cartButton.click()
+        await step('Open cart', async () => {
+            await this.cartButton.click()
+        })
     }
 }

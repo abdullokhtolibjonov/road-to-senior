@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { BasePage } from "./BasePage";
+import { step } from "../utils/step";
 
 export class CheckoutCompletePage extends BasePage {
     protected readonly path = '/checkout-complete.html'
@@ -18,9 +19,11 @@ export class CheckoutCompletePage extends BasePage {
     }
 
     async backHome(): Promise<void> {
-        // The image above the button loads late and pushes it ~70px down; clicking before that
-        // hits the button's old position and nothing happens (flaky on Firefox). Wait for it first.
-        await expect(this.ponyImage).toHaveJSProperty('complete', true);
-        await this.backHomeButton.click();
+        await step('Go back home', async () => {
+            // The image above the button loads late and pushes it ~70px down; clicking before that
+            // hits the button's old position and nothing happens (flaky on Firefox). Wait for it first.
+            await expect(this.ponyImage).toHaveJSProperty('complete', true);
+            await this.backHomeButton.click();
+        })
     }
 }

@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 import { BasePage } from './BasePage';
 import { expect } from '@playwright/test';
+import { step } from '../utils/step';
 
 export class ProductDetailsPage extends BasePage {
     protected readonly path = '/inventory-item.html';
@@ -22,11 +23,15 @@ export class ProductDetailsPage extends BasePage {
     }
 
     override async expectLoaded(): Promise<void> {
-        await expect(this.page).toHaveURL(/inventory-item\.html\?id=\d+/);
-        await expect(this.backToProductsButton).toBeVisible();
+        await step('Expect ProductDetailsPage loaded', async () => {
+            await expect(this.page).toHaveURL(/inventory-item\.html\?id=\d+/);
+            await expect(this.backToProductsButton).toBeVisible();
+        })
     }
 
     async addToCart(): Promise<void> {
-        await this.addToCartButton.click();
+        await step('Add product to cart', async () => {
+            await this.addToCartButton.click();
+        })
     }
 }
