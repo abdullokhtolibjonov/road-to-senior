@@ -305,7 +305,7 @@ tests copied from an existing pattern — that's what the layers buy.
 `filterUsers(key, value)` in `UsersClient` + a test that every returned user… (hint: `UserSchema`
 doesn't include `hair` yet — extend it or add a narrow schema).
 
-**▶ Start here next: Phase 7 (CI/CD)** — Phase 6 done 2026-10-27 (exit check passed). Carry-over from Phase 5: stress + spike in the k6 job.
+**▶ Start here next: Phase 7, task 2 — break a test on purpose in a PR** (branch + PR = public action → confirm before opening it), check the downloaded report alone explains the failure. Then: 3) CI badge in README, 4) branch protection on `main` (user does it in Settings, Claude guides), 5) exit check: fresh clone + `npm ci` → CI green. Done 2026-10-27: `ci.yml` (suite/tag manual runs) + `performance.yml` (stress/spike carry-over finished) — see the Phase 7 row in the status table.
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
