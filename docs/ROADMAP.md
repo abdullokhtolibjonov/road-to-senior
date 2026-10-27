@@ -305,7 +305,7 @@ tests copied from an existing pattern — that's what the layers buy.
 `filterUsers(key, value)` in `UsersClient` + a test that every returned user… (hint: `UserSchema`
 doesn't include `hair` yet — extend it or add a narrow schema).
 
-**▶ Start here next: Phase 6 (Reporting & data)** — Phase 5 done 2026-10-18 (stress/spike carried over to Phase 7).
+**▶ Start here next: Phase 7 (CI/CD)** — Phase 6 done 2026-10-27 (exit check passed). Carry-over from Phase 5: stress + spike in the k6 job.
 
   > **Task 1 (recorded 2026-10-14):** other user types.
   > - [x] A — data-driven login for every role except `lockedUser` (`Exclude<Role, 'lockedUser'>`)
