@@ -18,7 +18,9 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["node_modules/**", "dist/**", "coverage/**", "playwright-report/**", "playwright-report-html/**"],
+    // .claude/skills holds third-party skill examples (k6 scripts with k6 globals), not project code
+    ignores: ["node_modules/**", "dist/**", "coverage/**", "playwright-report/**", "playwright-report-html/**",
+      "allure-results/**", "allure-report/**", ".claude/**"],
   },
 
   // Must be LAST

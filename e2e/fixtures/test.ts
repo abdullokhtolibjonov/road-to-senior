@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test'
+import { test as base } from '../../shared/fixtures/faker'
 import { LoginPage } from '../pages/LoginPage'
 import { CartPage } from '../pages/CartPage';
 import { CheckoutOverviewPage } from '../pages/CheckoutOverviewPage';

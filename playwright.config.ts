@@ -19,7 +19,8 @@ export default defineConfig({
   retries: process.env.CI ? 2: 0,
   use: {
     baseURL: 'https://www.saucedemo.com',
-    trace: 'on-first-retry',
+    // Locally there are no retries, so 'on-first-retry' never recorded a trace for a local failure.
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
     //headless: false,

@@ -1,9 +1,12 @@
-import { test as base, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { test as base } from '../../shared/fixtures/faker'
 import { UsersClient } from '../clients/UsersClient'
 import { AuthClient } from '../clients/AuthClient'
+import type { ApiCall } from '../clients/BaseClient'
 import { EMILY_CREDENTIALS } from '../test-data/users'
 
 type ApiFixtures = {
+    apiLog: ApiCall[],
     usersClient: UsersClient,
     authClient: AuthClient
 }
@@ -15,11 +18,25 @@ type ApiWorkerFixtures = {
 // Test fixtures are built on the built-in `request` fixture, which already carries the api
 // project's baseURL — so the clients need no config of their own.
 export const test = base.extend<ApiFixtures, ApiWorkerFixtures>({
-    usersClient: async ({ request }, use) => {
-        await use(new UsersClient(request))
+    // Every call the test's clients make lands here. The code after use() is teardown and runs
+    // after the test body, when the result is known: only a failed test gets the log attached,
+    // so the report shows the actual requests and responses without re-running anything.
+    // eslint-disable-next-line no-empty-pattern
+    apiLog: async ({}, use, testInfo) => {
+        const log: ApiCall[] = []
+        await use(log)
+        if (testInfo.status !== testInfo.expectedStatus && log.length > 0) {
+            await testInfo.attach('api calls', {
+                body: JSON.stringify(log, null, 2),
+                contentType: 'application/json'
+            })
+        }
     },
-    authClient: async ({ request }, use) => {
-        await use(new AuthClient(request))
+    usersClient: async ({ request, apiLog }, use) => {
+        await use(new UsersClient(request, apiLog))
+    },
+    authClient: async ({ request, apiLog }, use) => {
+        await use(new AuthClient(request, apiLog))
     },
 
     // Logs in once per worker process and shares the token with every test that worker runs —
