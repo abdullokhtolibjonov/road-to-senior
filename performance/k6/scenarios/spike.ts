@@ -1,7 +1,7 @@
 import { sleep } from 'k6'
 import type { Options } from 'k6/options'
 import { assertLocalTarget } from '../config.ts'
-import { getHome } from '../lib/requests.ts'
+import { getHome, postPizza } from '../lib/requests.ts'
 import { type NamedStage, perStageThresholds, tagStage } from '../lib/stages.ts'
 
 // Spike: a sudden burst far above normal, then back. Answers "does it survive the burst, and do
@@ -23,11 +23,16 @@ export const options: Options = {
     thresholds: {
         http_req_failed: ['rate<0.10'], // a burst may cost some errors; more than 10 % = didn't survive
         ...perStageThresholds('http_req_duration', STAGES, 'p(95)<2000'),
+        // Errors per stage too: recovery means errors back to ~0, not just fast responses.
+        ...perStageThresholds('http_req_failed', STAGES, 'rate<0.10'),
     },
 }
 
+// Same journey as stress: the home page alone is static and never felt 150 VUs (first CI run:
+// p95 0.6ms in every stage). The pizza endpoint does real work — that's what a burst can break.
 export default function (): void {
     tagStage(STAGES)
     getHome()
+    postPizza()
     sleep(1)
 }
