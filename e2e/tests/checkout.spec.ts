@@ -3,6 +3,7 @@ import type { CheckoutInfo } from '../utils/types/types';
 import { MESSAGES } from '../test-data/messages'
 import { PRODUCTS, TAX_RATE } from '../test-data/products'
 import { sumCents, toCents } from '../utils/money'
+import { makeCheckoutInfo } from '../../shared/test-data/factories'
 
 test.beforeEach(async ({ loggedIn }) => {})
 
@@ -12,20 +13,21 @@ type CheckoutErrorCase = {
     error: string
 }
 
+// Valid random data with one field blanked: the override is the only thing that can cause the error.
 const errorCases: CheckoutErrorCase[] = [
     {
         title: 'missing first name',
-        info: { lastName: 'Tolibjonov', postalCode: '011700' },
+        info: makeCheckoutInfo({ firstName: '' }),
         error: MESSAGES.first_name_required
     },
     {
         title: 'missing last name',
-        info: { firstName: 'Abdulloh', postalCode: '011700' },
+        info: makeCheckoutInfo({ lastName: '' }),
         error: MESSAGES.last_name_required
     },
     {
         title: 'missing postal code',
-        info: { firstName: 'Abdulloh', lastName: 'Tolibjonov' },
+        info: makeCheckoutInfo({ postalCode: '' }),
         error: MESSAGES.postal_code_required
     }
 ]
@@ -47,11 +49,7 @@ test.describe('Checkout step one errors', { tag: ['@checkout'] }, () => {
 test('user can complete checkout with correct totals', { tag: ['@smoke']}, async({ inventoryPage, cartPage, checkoutPage, checkoutOverviewPage, checkoutCompletePage }) => {
     const backpackName = 'Sauce Labs Backpack'
     const tshirtName = 'Sauce Labs Bolt T-Shirt'
-    const data: CheckoutInfo = {
-        firstName: 'Abdulloh',
-        lastName: 'Tolibjonov',
-        postalCode: '011700'
-    }
+    const data = makeCheckoutInfo()
     const expectedSubtotalCents = toCents(PRODUCTS[backpackName]) + toCents(PRODUCTS[tshirtName])
 
     await inventoryPage.addToCart(backpackName)

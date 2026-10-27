@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/test'
 import { ErrorBodySchema } from '../schemas/common.schema'
 import { API_ERRORS, EMILY, NEW_USER } from '../test-data/users'
+import { makeUserPayload } from '../../shared/test-data/factories'
 
 // Server timestamps vs our clock: allow a few minutes of skew.
 const CLOCK_SKEW_MS = 5 * 60_000
@@ -86,12 +87,13 @@ test.describe('Users API', { tag: ['@users'] }, () => {
     }
 
     test('POST /users/add echoes the new user with an id', async ({ usersClient }) => {
-        const response = await usersClient.createUser(NEW_USER)
+        const newUser = makeUserPayload()
+        const response = await usersClient.createUser(newUser)
         expect(response.status).toBe(201)
 
         // The schema already guarantees a positive integer id; here we check our data came back.
         const body = await response.body()
-        expect(body).toMatchObject(NEW_USER)
+        expect(body).toMatchObject(newUser)
     })
 
     test('PUT /users/:id returns the updated user', async ({ usersClient }) => {
